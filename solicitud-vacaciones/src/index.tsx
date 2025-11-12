@@ -90,7 +90,7 @@ export default function SolicitudVacacionesForm() {
           {diasSolicitados > 0 && (
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <p className="text-sm text-blue-800 dark:text-blue-200">
-                📅 Total de días solicitados: <span className="font-bold text-lg">{diasSolicitados}</span>
+                📅 Total de días solicitados: <span className="font-bold text-lg">{diasSolicitados}</span> {diasSolicitados === 1 ? 'día' : 'días'}
               </p>
             </div>
           )}
