@@ -1,0 +1,264 @@
+name: Build Deployment Package (Offline)
+
+on:
+  push:
+    branches:
+      - main
+      - release/*
+    paths:
+      - 'forms-examples/**'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Package version (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  build-deployment-package:
+    name: Build Offline Deployment Package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Para obtener commit hash
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd forms-examples
+          npm install
+
+      - name: Get version info
+        id: version
+        run: |
+          # Usar input manual o generar automáticamente
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            # Versión basada en timestamp para pushes automáticos
+            VERSION="1.0.$(date +'%Y%m%d%H%M')"
+          fi
+
+          COMMIT_HASH="${{ github.sha }}"
+          SHORT_HASH="${COMMIT_HASH:0:7}"
+          BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "commit_hash=$SHORT_HASH" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+          echo "📦 Package Version: $VERSION"
+          echo "🔖 Commit: $SHORT_HASH"
+          echo "📅 Build Date: $BUILD_DATE"
+
+      - name: Build all forms
+        run: |
+          cd forms-examples
+
+          echo "🔨 Building forms..."
+
+          # Buscar todos los directorios con package.json (excepto node_modules)
+          for form_dir in $(find . -type f -name "package.json" -not -path "*/node_modules/*" | xargs dirname); do
+            form_name=$(basename "$form_dir")
+
+            if [ "$form_name" != "." ]; then
+              echo "  📝 Building: $form_name"
+              cd "$form_dir"
+
+              # Verificar que existe el script de build
+              if npm run | grep -q "build"; then
+                npm run build
+
+                if [ -f "dist/form.js" ]; then
+                  echo "  ✅ Built successfully: $form_name ($(wc -c < dist/form.js) bytes)"
+                else
+                  echo "  ❌ Build failed: $form_name (no dist/form.js)"
+                  exit 1
+                fi
+              else
+                echo "  ⚠️  No build script found for: $form_name"
+              fi
+
+              cd ../..
+            fi
+          done
+
+      - name: Generate manifest.json
+        id: manifest
+        run: |
+          cd forms-examples
+
+          echo "📋 Generating manifest.json..."
+
+          # Crear manifest.json dinámicamente
+          cat > manifest.json << EOF
+          {
+            "packageVersion": "${{ steps.version.outputs.version }}",
+            "buildDate": "${{ steps.version.outputs.build_date }}",
+            "commitHash": "${{ steps.version.outputs.commit_hash }}",
+            "forms": [
+          EOF
+
+          # Agregar cada form al manifest
+          first=true
+          for form_dir in $(find . -type f -name "form.js" -path "*/dist/form.js" | xargs dirname | xargs dirname); do
+            form_name=$(basename "$form_dir")
+
+            # Leer package.json del form
+            if [ -f "$form_dir/package.json" ]; then
+              version=$(jq -r '.version // "1.0.0"' "$form_dir/package.json")
+              description=$(jq -r '.description // "Custom form"' "$form_dir/package.json")
+              author=$(jq -r '.author // "Bizuit Team"' "$form_dir/package.json")
+
+              # ProcessName = FormName con capitalización (AprobacionGastos)
+              process_name=$(echo "$form_name" | sed -r 's/(^|-)([a-z])/\U\2/g')
+
+              size=$(wc -c < "$form_dir/dist/form.js")
+
+              # Agregar coma si no es el primero
+              if [ "$first" = false ]; then
+                echo "," >> manifest.json
+              fi
+              first=false
+
+              # Agregar form al manifest
+              cat >> manifest.json << FORM_EOF
+              {
+                "formName": "$form_name",
+                "processName": "$process_name",
+                "version": "$version",
+                "author": "$author",
+                "description": "$description",
+                "sizeBytes": $size,
+                "path": "forms/$form_name/form.js"
+              }
+          FORM_EOF
+            fi
+          done
+
+          # Cerrar manifest.json
+          cat >> manifest.json << EOF
+            ]
+          }
+          EOF
+
+          # Pretty print
+          jq '.' manifest.json > manifest.tmp && mv manifest.tmp manifest.json
+
+          echo "✅ Manifest generated:"
+          cat manifest.json
+
+          # Contar forms
+          form_count=$(jq '.forms | length' manifest.json)
+          echo "form_count=$form_count" >> $GITHUB_OUTPUT
+
+      - name: Create deployment package structure
+        run: |
+          cd forms-examples
+
+          echo "📦 Creating deployment package structure..."
+
+          mkdir -p deployment-package/forms
+
+          # Copiar manifest.json
+          cp manifest.json deployment-package/
+
+          # Copiar forms compilados
+          for form_dir in $(find . -type f -name "form.js" -path "*/dist/form.js" | xargs dirname | xargs dirname); do
+            form_name=$(basename "$form_dir")
+
+            mkdir -p "deployment-package/forms/$form_name"
+            cp "$form_dir/dist/form.js" "deployment-package/forms/$form_name/"
+
+            echo "  ✅ Copied: $form_name"
+          done
+
+          echo "📂 Package structure:"
+          tree deployment-package || find deployment-package -type f
+
+      - name: Create ZIP package
+        run: |
+          cd forms-examples/deployment-package
+
+          PACKAGE_NAME="bizuit-custom-forms-deployment-${{ steps.version.outputs.version }}.zip"
+
+          echo "🗜️  Creating ZIP: $PACKAGE_NAME"
+
+          zip -r "../$PACKAGE_NAME" .
+
+          cd ..
+
+          # Info del ZIP
+          ZIP_SIZE=$(wc -c < "$PACKAGE_NAME" | numfmt --to=iec)
+          echo "✅ Package created: $PACKAGE_NAME ($ZIP_SIZE)"
+
+          # Verificar contenido
+          echo "📋 Package contents:"
+          unzip -l "$PACKAGE_NAME"
+
+      - name: Upload deployment package as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bizuit-custom-forms-deployment-${{ steps.version.outputs.version }}
+          path: forms-examples/bizuit-custom-forms-deployment-${{ steps.version.outputs.version }}.zip
+          retention-days: 90  # 3 meses
+
+      - name: Create release (if manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Custom Forms Deployment v${{ steps.version.outputs.version }}
+          body: |
+            ## 📦 Deployment Package - Offline Installation
+
+            **Version**: ${{ steps.version.outputs.version }}
+            **Commit**: ${{ steps.version.outputs.commit_hash }}
+            **Build Date**: ${{ steps.version.outputs.build_date }}
+            **Forms included**: ${{ steps.manifest.outputs.form_count }}
+
+            ### 📥 Installation Instructions
+
+            1. Download `bizuit-custom-forms-deployment-${{ steps.version.outputs.version }}.zip`
+            2. Transfer to offline server (USB, network share, etc.)
+            3. Access: `https://your-server.com/BIZUITCustomForms/admin/upload-forms`
+            4. Upload the ZIP file
+            5. Verify deployment success
+
+            ### 📋 Forms in this package
+
+            Check `manifest.json` inside the ZIP for complete list.
+
+            ---
+
+            🤖 Generated automatically by GitHub Actions
+          files: |
+            forms-examples/bizuit-custom-forms-deployment-${{ steps.version.outputs.version }}.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## 🎉 Deployment Package Built Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: ${{ steps.version.outputs.commit_hash }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Forms**: ${{ steps.manifest.outputs.form_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📥 Download" >> $GITHUB_STEP_SUMMARY
+          echo "Go to **Actions** → **Artifacts** to download the deployment package" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📤 Upload Instructions" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download the ZIP from artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "2. Transfer to offline server" >> $GITHUB_STEP_SUMMARY
+          echo "3. Upload via: \`/admin/upload-forms\`" >> $GITHUB_STEP_SUMMARY
