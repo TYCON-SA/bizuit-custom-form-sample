@@ -96,7 +96,7 @@ export default function AprobacionGastosForm() {
         {/* Info */}
         <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <p className="text-sm text-blue-800 dark:text-blue-200">
-            ✅ Este form se cargó dinámicamente desde la base de datos usando React global compartido
+            ✅ Custom form cargado dinámicamente - React compartido globalmente
           </p>
         </div>
       </div>
