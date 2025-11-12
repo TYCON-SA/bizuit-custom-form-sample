@@ -6,7 +6,9 @@ on:
       - main
       - release/*
     paths:
-      - 'forms-examples/**'
+      - '*/src/**'           # Cambios en source de cualquier form
+      - '*/package.json'     # Cambios en package.json de forms
+      - 'build-form.js'      # Cambios en script de build compartido
   workflow_dispatch:
     inputs:
       version:
@@ -32,9 +34,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          cd forms-examples
-          npm install
+        run: npm install
 
       - name: Get version info
         id: version
@@ -61,8 +61,6 @@ jobs:
 
       - name: Build all forms
         run: |
-          cd forms-examples
-
           echo "🔨 Building forms..."
 
           # Buscar todos los directorios con package.json (excepto node_modules)
@@ -94,8 +92,6 @@ jobs:
       - name: Generate manifest.json
         id: manifest
         run: |
-          cd forms-examples
-
           echo "📋 Generating manifest.json..."
 
           # Crear manifest.json dinámicamente
@@ -162,8 +158,6 @@ jobs:
 
       - name: Create deployment package structure
         run: |
-          cd forms-examples
-
           echo "📦 Creating deployment package structure..."
 
           mkdir -p deployment-package/forms
@@ -186,7 +180,7 @@ jobs:
 
       - name: Create ZIP package
         run: |
-          cd forms-examples/deployment-package
+          cd deployment-package
 
           PACKAGE_NAME="bizuit-custom-forms-deployment-${{ steps.version.outputs.version }}.zip"
 
@@ -208,7 +202,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bizuit-custom-forms-deployment-${{ steps.version.outputs.version }}
-          path: forms-examples/bizuit-custom-forms-deployment-${{ steps.version.outputs.version }}.zip
+          path: bizuit-custom-forms-deployment-${{ steps.version.outputs.version }}.zip
           retention-days: 90  # 3 meses
 
       - name: Create release (if manual trigger)
@@ -241,7 +235,7 @@ jobs:
 
             🤖 Generated automatically by GitHub Actions
           files: |
-            forms-examples/bizuit-custom-forms-deployment-${{ steps.version.outputs.version }}.zip
+            bizuit-custom-forms-deployment-${{ steps.version.outputs.version }}.zip
           draft: false
           prerelease: false
         env:
