@@ -1,0 +1,23 @@
+{
+  "name": "@tyconsa/bizuit-form-solicitud-vacaciones",
+  "version": "1.0.0",
+  "description": "Formulario de Solicitud de Vacaciones para Bizuit BPM",
+  "main": "dist/form.js",
+  "scripts": {
+    "build": "node ../build-form.js ./src/index.tsx ./dist/form.js solicitud-vacaciones",
+    "dev": "node ../build-form.js ./src/index.tsx ./dist/form.js solicitud-vacaciones --watch"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.26",
+    "@types/react-dom": "^18.3.7",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": ["bizuit", "custom-form", "solicitud-vacaciones", "hr"],
+  "author": "Tyconsa",
+  "license": "MIT"
+}

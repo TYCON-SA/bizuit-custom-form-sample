@@ -59,17 +59,38 @@ jobs:
           echo "🔖 Commit: $SHORT_HASH"
           echo "📅 Build Date: $BUILD_DATE"
 
-      - name: Build all forms
+      - name: Detect changed forms
+        id: changed_forms
+        run: |
+          echo "🔍 Detecting changed forms..."
+
+          # Obtener lista de forms modificados desde el último commit
+          # Buscar cambios en directorios que contengan src/ o package.json
+          CHANGED_FORMS=$(git diff --name-only HEAD~1 HEAD | grep -E '^[^/]+/(src/|package\.json)' | cut -d'/' -f1 | sort -u || true)
+
+          if [ -z "$CHANGED_FORMS" ]; then
+            echo "⚠️  No forms changed, building all forms"
+            # Si no hay cambios, buscar todos los forms
+            CHANGED_FORMS=$(find . -type f -name "package.json" -not -path "*/node_modules/*" -not -path "./package.json" | xargs dirname | xargs -n1 basename)
+          fi
+
+          # Convertir a array para GitHub Output
+          FORMS_ARRAY=$(echo "$CHANGED_FORMS" | tr '\n' ' ')
+          echo "changed_forms=$FORMS_ARRAY" >> $GITHUB_OUTPUT
+
+          echo "📝 Forms to build:"
+          echo "$CHANGED_FORMS"
+
+      - name: Build changed forms
         run: |
           echo "🔨 Building forms..."
 
-          # Buscar todos los directorios con package.json (excepto node_modules)
-          for form_dir in $(find . -type f -name "package.json" -not -path "*/node_modules/*" | xargs dirname); do
-            form_name=$(basename "$form_dir")
+          FORMS_TO_BUILD="${{ steps.changed_forms.outputs.changed_forms }}"
 
-            if [ "$form_name" != "." ]; then
+          for form_name in $FORMS_TO_BUILD; do
+            if [ -d "$form_name" ] && [ -f "$form_name/package.json" ]; then
               echo "  📝 Building: $form_name"
-              cd "$form_dir"
+              cd "$form_name"
 
               # Verificar que existe el script de build
               if npm run | grep -q "build"; then
@@ -85,7 +106,7 @@ jobs:
                 echo "  ⚠️  No build script found for: $form_name"
               fi
 
-              cd ../..
+              cd ..
             fi
           done
 
