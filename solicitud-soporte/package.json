@@ -1,0 +1,23 @@
+{
+  "name": "@tyconsa/bizuit-form-solicitud-soporte",
+  "version": "1.0.0",
+  "description": "Formulario de Solicitud de Soporte Técnico para Bizuit BPM",
+  "main": "dist/form.js",
+  "scripts": {
+    "build": "node ../build-form.js ./src/index.tsx ./dist/form.js solicitud-soporte",
+    "dev": "node ../build-form.js ./src/index.tsx ./dist/form.js solicitud-soporte --watch"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.26",
+    "@types/react-dom": "^18.3.7",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": ["bizuit", "custom-form", "solicitud-soporte", "helpdesk", "it"],
+  "author": "Tyconsa",
+  "license": "MIT"
+}

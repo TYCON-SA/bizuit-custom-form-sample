@@ -1,0 +1,11 @@
+{
+  "formName": "solicitud-soporte",
+  "version": "1.0.0",
+  "builtAt": "2025-11-13T00:59:19.141Z",
+  "sizeBytes": 8270,
+  "entryPoint": "./src/index.tsx",
+  "externals": [
+    "react",
+    "react-dom"
+  ]
+}
