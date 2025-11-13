@@ -1,0 +1,11 @@
+{
+  "formName": "aprobacion-gastos",
+  "version": "1.0.0",
+  "builtAt": "2025-11-12T22:09:07.605Z",
+  "sizeBytes": 3940,
+  "entryPoint": "./src/index.tsx",
+  "externals": [
+    "react",
+    "react-dom"
+  ]
+}

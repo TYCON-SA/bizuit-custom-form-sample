@@ -30,6 +30,45 @@ async function buildForm() {
       fs.mkdirSync(distDir, { recursive: true });
     }
 
+    // Plugin to replace React imports with global references
+    const globalReactPlugin = {
+      name: 'global-react',
+      setup(build) {
+        // Intercept react imports
+        build.onResolve({ filter: /^react$/ }, args => {
+          return { path: args.path, namespace: 'global-react' }
+        })
+
+        build.onResolve({ filter: /^react-dom$/ }, args => {
+          return { path: args.path, namespace: 'global-react' }
+        })
+
+        build.onResolve({ filter: /^react\/jsx-runtime$/ }, args => {
+          return { path: args.path, namespace: 'global-react' }
+        })
+
+        build.onResolve({ filter: /^react\/jsx-dev-runtime$/ }, args => {
+          return { path: args.path, namespace: 'global-react' }
+        })
+
+        // Return empty module for these imports
+        build.onLoad({ filter: /.*/, namespace: 'global-react' }, args => {
+          const contents = args.path === 'react'
+            ? 'module.exports = window.React'
+            : args.path === 'react-dom'
+            ? 'module.exports = window.ReactDOM'
+            : args.path.includes('jsx-runtime')
+            ? 'module.exports = { jsx: window.React.createElement, jsxs: window.React.createElement, Fragment: window.React.Fragment }'
+            : ''
+
+          return {
+            contents,
+            loader: 'js',
+          }
+        })
+      },
+    }
+
     const result = await esbuild.build({
       entryPoints: [config.entryPoint],
       bundle: true,
@@ -41,9 +80,8 @@ async function buildForm() {
       minify: true,
       sourcemap: true,
 
-      // CRITICAL: Mark React and React-DOM as external
-      // The runtime app will provide these via window.React and window.ReactDOM
-      external: ['react', 'react-dom'],
+      // Use plugin to inject global React references
+      plugins: [globalReactPlugin],
 
       // Replace React imports with global references
       banner: {
@@ -59,8 +97,10 @@ const ReactDOM = window.ReactDOM;
         `.trim(),
       },
 
-      jsx: 'automatic',
-      jsxImportSource: 'react',
+      // Use classic JSX runtime to avoid jsx-runtime imports
+      jsx: 'transform',
+      jsxFactory: 'React.createElement',
+      jsxFragment: 'React.Fragment',
 
       loader: {
         '.tsx': 'tsx',

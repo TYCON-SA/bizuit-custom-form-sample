@@ -1,0 +1,25 @@
+{
+  "packageVersion": "1.0.0",
+  "buildDate": "2025-11-12T23:17:00.000Z",
+  "commitHash": "fefc446",
+  "forms": [
+    {
+      "formName": "aprobacion-gastos",
+      "processName": "AprobacionGastos",
+      "version": "1.0.0",
+      "author": "Tyconsa",
+      "description": "Formulario de Aprobación de Gastos para Bizuit BPM",
+      "sizeBytes": 3940,
+      "path": "forms/aprobacion-gastos/form.js"
+    },
+    {
+      "formName": "solicitud-vacaciones",
+      "processName": "SolicitudVacaciones",
+      "version": "1.0.0",
+      "author": "Tyconsa",
+      "description": "Formulario de Solicitud de Vacaciones para Bizuit BPM",
+      "sizeBytes": 6089,
+      "path": "forms/solicitud-vacaciones/form.js"
+    }
+  ]
+}

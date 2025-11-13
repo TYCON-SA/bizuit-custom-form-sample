@@ -1,8 +1,8 @@
 {
   "formName": "solicitud-vacaciones",
-  "version": "1.1.0",
-  "builtAt": "2025-11-12T23:23:47.769Z",
-  "sizeBytes": 6268,
+  "version": "1.1.1",
+  "builtAt": "2025-11-13T00:44:28.412Z",
+  "sizeBytes": 6367,
   "entryPoint": "./src/index.tsx",
   "externals": [
     "react",
