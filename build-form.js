@@ -72,8 +72,7 @@ async function buildForm() {
     const result = await esbuild.build({
       entryPoints: [config.entryPoint],
       bundle: true,
-      format: 'iife', // Immediately Invoked Function Expression
-      globalName: `BizuitForm_${config.formName.replace(/-/g, '_')}`,
+      format: 'esm', // ES Module format for dynamic import()
       outfile: config.outfile,
       platform: 'browser',
       target: ['es2020'],

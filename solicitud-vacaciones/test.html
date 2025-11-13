@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script src="./dist/form.js"></script>
+    <script>
+        const FormComponent = BizuitForm_solicitud_vacaciones.default;
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(FormComponent));
+    </script>
+</body>
+</html>
