@@ -200,32 +200,31 @@ jobs:
           echo "📂 Package structure:"
           tree deployment-package || find deployment-package -type f
 
-      - name: Create ZIP package
+      - name: Verify deployment package structure
         run: |
-          cd deployment-package
+          echo "📋 Package structure:"
+          tree deployment-package || find deployment-package -type f
 
-          PACKAGE_NAME="bizuit-custom-forms-deployment-${{ steps.version.outputs.version }}.zip"
-
-          echo "🗜️  Creating ZIP: $PACKAGE_NAME"
-
-          zip -r "../$PACKAGE_NAME" .
-
-          cd ..
-
-          # Info del ZIP
-          ZIP_SIZE=$(wc -c < "$PACKAGE_NAME" | numfmt --to=iec)
-          echo "✅ Package created: $PACKAGE_NAME ($ZIP_SIZE)"
-
-          # Verificar contenido
-          echo "📋 Package contents:"
-          unzip -l "$PACKAGE_NAME"
+          echo ""
+          echo "📊 Package stats:"
+          du -sh deployment-package
+          echo "Forms: ${{ steps.manifest.outputs.form_count }}"
 
       - name: Upload deployment package as artifact
         uses: actions/upload-artifact@v4
         with:
           name: bizuit-custom-forms-deployment-${{ steps.version.outputs.version }}
-          path: bizuit-custom-forms-deployment-${{ steps.version.outputs.version }}.zip
+          path: deployment-package/
           retention-days: 90  # 3 meses
+
+      - name: Create ZIP for release (if manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          cd deployment-package
+          PACKAGE_NAME="bizuit-custom-forms-deployment-${{ steps.version.outputs.version }}.zip"
+          zip -r "../$PACKAGE_NAME" .
+          cd ..
+          echo "✅ Release ZIP created: $PACKAGE_NAME"
 
       - name: Create release (if manual trigger)
         if: github.event_name == 'workflow_dispatch'
@@ -246,7 +245,7 @@ jobs:
             1. Download `bizuit-custom-forms-deployment-${{ steps.version.outputs.version }}.zip`
             2. Transfer to offline server (USB, network share, etc.)
             3. Access: `https://your-server.com/BIZUITCustomForms/admin/upload-forms`
-            4. Upload the ZIP file
+            4. Upload the ZIP file directly (no need to extract first)
             5. Verify deployment success
 
             ### 📋 Forms in this package
