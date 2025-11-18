@@ -1,0 +1,23 @@
+{
+  "name": "@tyconsa/bizuit-form-dashboard-integration-demo",
+  "version": "1.0.0",
+  "description": "Formulario de demostración de integración con Dashboard - Inicia proceso samplewebpages",
+  "main": "dist/form.js",
+  "scripts": {
+    "build": "node ../build-form.js ./src/index.tsx ./dist/form.js dashboard-integration-demo",
+    "dev": "node ../build-form.js ./src/index.tsx ./dist/form.js dashboard-integration-demo --watch"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.26",
+    "@types/react-dom": "^18.3.7",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": ["bizuit", "custom-form", "dashboard", "integration", "samplewebpages"],
+  "author": "Tyconsa",
+  "license": "MIT"
+}
