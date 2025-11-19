@@ -1,6 +1,6 @@
 {
   "name": "@tyconsa/bizuit-form-dashboard-integration-demo",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Formulario de demostración de integración con Dashboard - Inicia proceso samplewebpages",
   "main": "dist/form.js",
   "scripts": {

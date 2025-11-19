@@ -1,7 +1,7 @@
 {
   "formName": "dashboard-integration-demo",
-  "version": "1.0.7",
-  "builtAt": "2025-11-19T01:12:39.502Z",
+  "version": "1.0.8",
+  "builtAt": "2025-11-19T01:33:33.117Z",
   "sizeBytes": 11170,
   "entryPoint": "./src/index.tsx",
   "externals": [

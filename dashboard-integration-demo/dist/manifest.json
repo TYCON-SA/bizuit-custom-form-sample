@@ -1,14 +1,14 @@
 {
-  "packageVersion": "1.0.7",
-  "buildDate": "2025-01-18T01:00:00.000Z",
-  "commitHash": "fix-react-key-warning",
+  "packageVersion": "1.0.8",
+  "buildDate": "2025-01-18T01:30:00.000Z",
+  "commitHash": "react-day-picker-v9-migration",
   "forms": [
     {
       "formName": "dashboard-integration-demo",
-      "version": "1.0.7",
+      "version": "1.0.8",
       "processName": "DashboardIntegrationDemo",
       "author": "Tyconsa",
-      "description": "Dashboard Integration Demo - Fix React key warning with fallback index",
+      "description": "Dashboard Integration Demo - react-day-picker v9 (no React warnings)",
       "path": "form.js",
       "sizeBytes": 11167,
       "metadata": "form.meta.json"
