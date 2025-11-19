@@ -1,6 +1,6 @@
 {
   "name": "@tyconsa/bizuit-form-dashboard-integration-demo",
-  "version": "1.0.0",
+  "version": "1.0.7",
   "description": "Formulario de demostración de integración con Dashboard - Inicia proceso samplewebpages",
   "main": "dist/form.js",
   "scripts": {
@@ -17,7 +17,13 @@
     "esbuild": "^0.24.0",
     "typescript": "^5.0.0"
   },
-  "keywords": ["bizuit", "custom-form", "dashboard", "integration", "samplewebpages"],
+  "keywords": [
+    "bizuit",
+    "custom-form",
+    "dashboard",
+    "integration",
+    "samplewebpages"
+  ],
   "author": "Tyconsa",
   "license": "MIT"
 }

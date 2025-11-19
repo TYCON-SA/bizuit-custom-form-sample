@@ -1,0 +1,17 @@
+{
+  "packageVersion": "1.0.7",
+  "buildDate": "2025-01-18T01:00:00.000Z",
+  "commitHash": "fix-react-key-warning",
+  "forms": [
+    {
+      "formName": "dashboard-integration-demo",
+      "version": "1.0.7",
+      "processName": "DashboardIntegrationDemo",
+      "author": "Tyconsa",
+      "description": "Dashboard Integration Demo - Fix React key warning with fallback index",
+      "path": "form.js",
+      "sizeBytes": 11167,
+      "metadata": "form.meta.json"
+    }
+  ]
+}
