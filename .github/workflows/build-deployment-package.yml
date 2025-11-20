@@ -268,43 +268,36 @@ jobs:
           path: deployment-package/
           retention-days: 90  # 3 meses
 
-      - name: Create individual ZIPs in each form's dist directory
+      - name: Create deployment ZIP and copy to dist directories
         run: |
-          echo "📦 Creating individual ZIP files in each form's dist directory..."
+          echo "📦 Creating deployment package ZIP..."
 
-          FORMS_TO_ZIP="${{ steps.changed_forms.outputs.changed_forms }}"
-
-          for form_name in $FORMS_TO_ZIP; do
-            if [ -d "$form_name" ] && [ -f "$form_name/dist/form.js" ]; then
-              echo "  📝 Creating ZIP for: $form_name"
-
-              # Crear ZIP dentro del directorio dist del form
-              cd "$form_name/dist"
-
-              # Nombre del ZIP: form-name-v1.0.0.zip (usando versión del package.json)
-              version=$(jq -r '.version // "1.0.0"' "../package.json")
-              ZIP_NAME="${form_name}-v${version}.zip"
-
-              # Comprimir solo form.js (archivo listo para subir a custom-forms)
-              zip "$ZIP_NAME" form.js
-
-              echo "  ✅ Created: $form_name/dist/$ZIP_NAME ($(wc -c < "$ZIP_NAME") bytes)"
-
-              cd ../..
-            fi
-          done
-
-          echo ""
-          echo "📊 All ZIPs created in their respective dist directories"
-
-      - name: Create ZIP for release (if manual trigger)
-        if: github.event_name == 'workflow_dispatch'
-        run: |
+          # Crear ZIP del deployment package (mismo que el artifact)
           cd deployment-package
           PACKAGE_NAME="bizuit-custom-forms-deployment-${{ steps.version.outputs.version }}.zip"
           zip -r "../$PACKAGE_NAME" .
           cd ..
-          echo "✅ Release ZIP created: $PACKAGE_NAME"
+
+          echo "✅ Created: $PACKAGE_NAME ($(wc -c < "$PACKAGE_NAME") bytes)"
+
+          # Copiar el ZIP a cada directorio dist/ de los forms compilados
+          echo ""
+          echo "📋 Copying deployment ZIP to form dist directories..."
+
+          FORMS_TO_COPY="${{ steps.changed_forms.outputs.changed_forms }}"
+
+          for form_name in $FORMS_TO_COPY; do
+            if [ -d "$form_name/dist" ]; then
+              cp "$PACKAGE_NAME" "$form_name/dist/"
+              echo "  ✅ Copied to: $form_name/dist/$PACKAGE_NAME"
+            fi
+          done
+
+          echo ""
+          echo "📊 Deployment ZIP available in:"
+          echo "  - Root: $PACKAGE_NAME (for releases)"
+          echo "  - Each form's dist/ directory (for easy access)"
+
 
       - name: Create release (if manual trigger)
         if: github.event_name == 'workflow_dispatch'
