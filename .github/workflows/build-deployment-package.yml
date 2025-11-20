@@ -268,14 +268,6 @@ jobs:
           path: deployment-package/
           retention-days: 90  # 3 meses
 
-      - name: Upload individual form ZIPs
-        uses: actions/upload-artifact@v4
-        with:
-          name: individual-form-zips-${{ steps.version.outputs.version }}
-          path: |
-            */dist/*.zip
-          retention-days: 90  # 3 meses
-
       - name: Create individual ZIPs in each form's dist directory
         run: |
           echo "📦 Creating individual ZIP files in each form's dist directory..."
@@ -293,8 +285,8 @@ jobs:
               version=$(jq -r '.version // "1.0.0"' "../package.json")
               ZIP_NAME="${form_name}-v${version}.zip"
 
-              # Comprimir todos los archivos del dist (form.js, form.js.map, form.meta.json)
-              zip -r "$ZIP_NAME" ./*.js ./*.js.map ./*.json 2>/dev/null || zip -r "$ZIP_NAME" .
+              # Comprimir solo form.js (archivo listo para subir a custom-forms)
+              zip "$ZIP_NAME" form.js
 
               echo "  ✅ Created: $form_name/dist/$ZIP_NAME ($(wc -c < "$ZIP_NAME") bytes)"
 
