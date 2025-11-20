@@ -58,7 +58,8 @@ jobs:
           BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "commit_hash=$SHORT_HASH" >> $GITHUB_OUTPUT
+          echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
+          echo "short_hash=$SHORT_HASH" >> $GITHUB_OUTPUT
           echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
 
           echo "📦 Package Version: $VERSION"
