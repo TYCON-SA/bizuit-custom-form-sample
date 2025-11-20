@@ -1,6 +1,6 @@
 {
   "name": "@tyconsa/bizuit-form-dashboard-integration-demo",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Formulario de demostración simple - Fondo naranja con modal de versión",
   "main": "dist/form.js",
   "scripts": {
