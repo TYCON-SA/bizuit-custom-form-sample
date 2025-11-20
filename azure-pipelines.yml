@@ -47,29 +47,23 @@ stages:
               npm install
             displayName: 'Install dependencies'
 
-          # Obtener información de versión
-          - task: PowerShell@2
-            name: GetVersionInfo
-            displayName: 'Get version info'
+          # Obtener build metadata (commit hash y fecha)
+          - task: Bash@3
+            name: GetBuildMetadata
+            displayName: 'Get build metadata (commit hash and date)'
             inputs:
               targetType: 'inline'
               script: |
-                # Generar versión basada en timestamp
-                $timestamp = Get-Date -Format "yyyyMMddHHmm"
-                $version = "1.0.$timestamp"
+                COMMIT_HASH=$(git rev-parse HEAD)
+                SHORT_HASH=$(git rev-parse --short HEAD)
+                BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
 
-                # Obtener commit info
-                $commitHash = git rev-parse --short HEAD
-                $buildDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.000Z")
+                echo "##vso[task.setvariable variable=commitHash;isOutput=true]$COMMIT_HASH"
+                echo "##vso[task.setvariable variable=shortHash;isOutput=true]$SHORT_HASH"
+                echo "##vso[task.setvariable variable=buildDate;isOutput=true]$BUILD_DATE"
 
-                Write-Host "📦 Package Version: $version"
-                Write-Host "🔖 Commit: $commitHash"
-                Write-Host "📅 Build Date: $buildDate"
-
-                # Exportar variables para próximos pasos
-                Write-Host "##vso[task.setvariable variable=packageVersion;isOutput=true]$version"
-                Write-Host "##vso[task.setvariable variable=commitHash;isOutput=true]$commitHash"
-                Write-Host "##vso[task.setvariable variable=buildDate;isOutput=true]$buildDate"
+                echo "🔖 Commit: $SHORT_HASH"
+                echo "📅 Build Date: $BUILD_DATE"
 
           # Detectar formularios modificados
           - task: Bash@3
@@ -95,6 +89,123 @@ stages:
 
                 echo "📝 Forms to build:"
                 echo "$CHANGED_FORMS"
+
+          # Calcular versiones independientes por formulario
+          - task: Bash@3
+            name: CalculateFormVersions
+            displayName: 'Calculate per-form versions (independent versioning)'
+            inputs:
+              targetType: 'inline'
+              script: |
+                echo "🔢 Calculating independent versions for each form..."
+                echo ""
+
+                CHANGED_FORMS="$(DetectChangedForms.changedForms)"
+                COMMIT_MSG=$(git log -1 --pretty=%B)
+
+                # Detectar tipo de cambio para todas las formas
+                if echo "$COMMIT_MSG" | grep -qiE "^(BREAKING CHANGE|major):"; then
+                  BUMP_TYPE="major"
+                  echo "🔼 Bump type detected: MAJOR (breaking changes)"
+                elif echo "$COMMIT_MSG" | grep -qiE "^(feat|feature|minor):"; then
+                  BUMP_TYPE="minor"
+                  echo "🔼 Bump type detected: MINOR (new features)"
+                else
+                  BUMP_TYPE="patch"
+                  echo "🔼 Bump type detected: PATCH (fixes/chores)"
+                fi
+                echo ""
+
+                # Procesar cada form individualmente
+                for form_name in $CHANGED_FORMS; do
+                  echo "════════════════════════════════════════════════════════════════"
+                  echo "📦 Processing: $form_name"
+                  echo "────────────────────────────────────────────────────────────────"
+
+                  # 1. Buscar último tag git de este form (source of truth)
+                  LAST_TAG=$(git describe --tags --match "${form_name}-v*" --abbrev=0 2>/dev/null || echo "")
+
+                  if [ -n "$LAST_TAG" ]; then
+                    LAST_DEPLOYED_VERSION=${LAST_TAG#${form_name}-v}
+                    echo "✅ Last deployed version (git tag): $LAST_DEPLOYED_VERSION"
+                  else
+                    # Sin tag previo, comenzar desde 1.0.0 (no 0.0.0)
+                    LAST_DEPLOYED_VERSION="0.0.0"
+                    echo "ℹ️  No previous deployment found, will start from 1.0.0"
+                  fi
+
+                  # 2. Leer package.json actual
+                  if [ -f "$form_name/package.json" ]; then
+                    PACKAGE_VERSION=$(jq -r '.version // "1.0.0"' "$form_name/package.json")
+                    echo "📄 Current package.json version: $PACKAGE_VERSION"
+                  else
+                    echo "❌ ERROR: package.json not found for $form_name"
+                    exit 1
+                  fi
+
+                  # 3. Validar si coinciden (auto-correction check)
+                  if [ "$PACKAGE_VERSION" != "$LAST_DEPLOYED_VERSION" ]; then
+                    echo ""
+                    echo "⚠️  ═══════════════════════════════════════════════════════════"
+                    echo "⚠️  VERSION MISMATCH DETECTED!"
+                    echo "⚠️  ═══════════════════════════════════════════════════════════"
+                    echo "⚠️  Expected (last deployed): $LAST_DEPLOYED_VERSION"
+                    echo "⚠️  Found in package.json:    $PACKAGE_VERSION"
+                    echo "⚠️  "
+                    echo "⚠️  This means a developer manually changed package.json"
+                    echo "⚠️  Git tags are the source of truth for versioning"
+                    echo "⚠️  "
+                    echo "🔧 AUTO-CORRECTING to maintain semantic versioning..."
+                    echo "⚠️  ═══════════════════════════════════════════════════════════"
+                    echo ""
+                  fi
+
+                  # 4. Calcular nueva versión basada en el último tag (SOURCE OF TRUTH)
+                  IFS='.' read -r MAJOR MINOR PATCH <<< "$LAST_DEPLOYED_VERSION"
+
+                  # Caso especial: sin tag previo (0.0.0) → primera versión debe ser 1.0.0
+                  if [ "$LAST_DEPLOYED_VERSION" = "0.0.0" ]; then
+                    NEW_VERSION="1.0.0"
+                    echo "🎉 First deployment! Starting at v1.0.0"
+                  else
+                    # Incremento normal según bump type
+                    if [ "$BUMP_TYPE" = "major" ]; then
+                      MAJOR=$((MAJOR + 1))
+                      MINOR=0
+                      PATCH=0
+                    elif [ "$BUMP_TYPE" = "minor" ]; then
+                      MINOR=$((MINOR + 1))
+                      PATCH=0
+                    else
+                      PATCH=$((PATCH + 1))
+                    fi
+
+                    NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+                  fi
+
+                  echo "🔼 Version calculation ($BUMP_TYPE bump):"
+                  echo "   $LAST_DEPLOYED_VERSION → $NEW_VERSION"
+                  echo ""
+
+                  # 5. Actualizar package.json con versión correcta
+                  echo "💾 Updating $form_name/package.json to version $NEW_VERSION..."
+                  jq --arg version "$NEW_VERSION" '.version = $version' "$form_name/package.json" > "$form_name/package.tmp.json"
+                  mv "$form_name/package.tmp.json" "$form_name/package.json"
+
+                  echo "✅ package.json updated successfully"
+                  echo ""
+
+                  # 6. Guardar versión en output
+                  echo "${form_name}_version=$NEW_VERSION" >> /tmp/form_versions.txt
+
+                  echo "════════════════════════════════════════════════════════════════"
+                  echo ""
+                done
+
+                echo "✅ All form versions calculated and package.json files updated"
+                echo ""
+                echo "📋 Summary of versions:"
+                cat /tmp/form_versions.txt
 
           # Compilar formularios
           - task: Bash@3
@@ -178,9 +289,10 @@ stages:
                 # Crear manifest.json dinámicamente
                 cat > manifest.json << EOF
                 {
-                  "packageVersion": "$(GetVersionInfo.packageVersion)",
-                  "buildDate": "$(GetVersionInfo.buildDate)",
-                  "commitHash": "$(GetVersionInfo.commitHash)",
+                  "buildDate": "$(GetBuildMetadata.buildDate)",
+                  "commitHash": "$(GetBuildMetadata.commitHash)",
+                  "commitShortHash": "$(GetBuildMetadata.shortHash)",
+                  "repositoryUrl": "$(Build.Repository.Uri)",
                   "forms": [
                 EOF
 
@@ -212,12 +324,13 @@ stages:
                     fi
                     first=false
 
-                    # Agregar form al manifest con releaseNotes
+                    # Agregar form al manifest con releaseNotes y git tag
                     cat >> manifest.json << FORM_EOF
                     {
                       "formName": "$form_name",
                       "processName": "$process_name",
                       "version": "$version",
+                      "gitTag": "${form_name}-v${version}",
                       "author": "$author",
                       "description": "$description",
                       "sizeBytes": $size,
@@ -285,40 +398,184 @@ stages:
                 du -sh deployment-package
                 echo "Forms: $(GenerateManifest.formCount)"
 
-          # Crear ZIP del paquete
-          - task: ArchiveFiles@2
-            displayName: 'Create deployment ZIP'
+          # Crear ZIPs individuales por formulario
+          - task: Bash@3
+            displayName: 'Create deployment ZIPs (one per form with independent versions)'
             inputs:
-              rootFolderOrFile: '$(Build.SourcesDirectory)/deployment-package'
-              includeRootFolder: false
-              archiveType: 'zip'
-              archiveFile: '$(Build.ArtifactStagingDirectory)/bizuit-custom-forms-deployment-$(GetVersionInfo.packageVersion).zip'
-              replaceExistingArchive: true
+              targetType: 'inline'
+              script: |
+                echo "📦 Creating individual deployment ZIPs for each form..."
 
-          # Publicar artefacto
+                FORMS_TO_PACKAGE="$(DetectChangedForms.changedForms)"
+                SHORT_HASH="$(GetBuildMetadata.shortHash)"
+
+                for form_name in $FORMS_TO_PACKAGE; do
+                  if [ -d "$form_name" ] && [ -f "$form_name/dist/form.js" ]; then
+                    echo ""
+                    echo "📝 Creating ZIP for: $form_name"
+
+                    # Leer versión de package.json (ya actualizado en step anterior)
+                    FORM_VERSION=$(jq -r '.version' "$form_name/package.json")
+                    echo "  Version: $FORM_VERSION"
+
+                    # Crear estructura temporal para este form
+                    mkdir -p "temp-package-$form_name"
+
+                    # Copiar manifest.json
+                    cp deployment-package/manifest.json "temp-package-$form_name/"
+
+                    # Copiar solo este form
+                    mkdir -p "temp-package-$form_name/forms/$form_name"
+                    cp "$form_name/dist/form.js" "temp-package-$form_name/forms/$form_name/"
+
+                    # Nombre del ZIP específico para este form CON SU VERSIÓN INDIVIDUAL
+                    PACKAGE_NAME="${form_name}-deployment-${FORM_VERSION}-${SHORT_HASH}.zip"
+
+                    # Crear ZIP
+                    cd "temp-package-$form_name"
+                    zip -r "../$(Build.ArtifactStagingDirectory)/$PACKAGE_NAME" .
+                    cd ..
+
+                    # Limpiar directorio temporal
+                    rm -rf "temp-package-$form_name"
+
+                    echo "  ✅ Created: $PACKAGE_NAME"
+                  fi
+                done
+
+                echo ""
+                echo "📊 Deployment ZIPs created:"
+                ls -lh "$(Build.ArtifactStagingDirectory)"/*.zip 2>/dev/null || echo "  No ZIPs found"
+
+                echo ""
+                echo "🔗 Traceability:"
+                echo "  - Each ZIP is named: {form-name}-deployment-{form-version}-{hash}.zip"
+                echo "  - ZIP filename includes INDEPENDENT version per form + commit hash"
+                echo "  - manifest.json has per-form git tags"
+
+          # Publicar artefactos
           - task: PublishBuildArtifacts@1
-            displayName: 'Publish deployment package'
+            displayName: 'Publish deployment packages'
             inputs:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)'
               ArtifactName: '$(artifactName)'
               publishLocation: 'Container'
 
+          # Commit y push de versiones actualizadas y creación de tags
+          - task: Bash@3
+            displayName: 'Commit updated versions and create git tags'
+            inputs:
+              targetType: 'inline'
+              script: |
+                echo "📝 Committing updated package.json files and creating git tags..."
+
+                # Configurar git
+                git config user.name "Azure Pipelines"
+                git config user.email "azuredevops@microsoft.com"
+
+                # Agregar package.json actualizados
+                git add */package.json || true
+
+                # Verificar si hay cambios
+                if git diff --staged --quiet; then
+                  echo "⚠️  No package.json changes to commit"
+                else
+                  # Obtener lista de forms con versiones para el commit message
+                  FORMS_WITH_VERSIONS=""
+                  CHANGED_FORMS="$(DetectChangedForms.changedForms)"
+                  for form_name in $CHANGED_FORMS; do
+                    if [ -f "$form_name/package.json" ]; then
+                      FORM_VERSION=$(jq -r '.version' "$form_name/package.json")
+                      FORMS_WITH_VERSIONS="${FORMS_WITH_VERSIONS}\n  - $form_name: v$FORM_VERSION"
+                    fi
+                  done
+
+                  # Crear commit
+                  git commit -m "chore: update versions [skip ci]" \
+                             -m "Generated by Azure Pipeline $(Build.BuildNumber)" \
+                             -m "Commit: $(GetBuildMetadata.commitHash)" \
+                             -m "" \
+                             -m "Updated forms:${FORMS_WITH_VERSIONS}" \
+                             -m "" \
+                             -m "🤖 Automated commit by Azure DevOps"
+
+                  # Push del commit
+                  git push origin HEAD:main
+
+                  echo "✅ Updated package.json files committed and pushed"
+                fi
+
+                # Crear tags por formulario
+                echo ""
+                echo "🏷️  Creating per-form version tags..."
+
+                CHANGED_FORMS="$(DetectChangedForms.changedForms)"
+
+                for form_name in $CHANGED_FORMS; do
+                  if [ -f "$form_name/package.json" ]; then
+                    FORM_VERSION=$(jq -r '.version' "$form_name/package.json")
+                    TAG_NAME="${form_name}-v${FORM_VERSION}"
+
+                    echo ""
+                    echo "📦 Form: $form_name"
+                    echo "   Version: $FORM_VERSION"
+                    echo "   Tag: $TAG_NAME"
+
+                    # Verificar si el tag ya existe
+                    if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+                      echo "   ⚠️  Tag $TAG_NAME already exists, skipping"
+                    else
+                      # Crear tag anotado
+                      git tag -a "$TAG_NAME" \
+                              -m "Release $form_name v$FORM_VERSION" \
+                              -m "Auto-generated by Azure Pipeline $(Build.BuildNumber)" \
+                              -m "Build date: $(GetBuildMetadata.buildDate)" \
+                              -m "Commit: $(GetBuildMetadata.commitHash)"
+
+                      # Push del tag
+                      git push origin "$TAG_NAME"
+
+                      echo "   ✅ Tag $TAG_NAME created and pushed"
+                    fi
+                  fi
+                done
+
+                echo ""
+                echo "✅ All form-specific tags processed"
+
           # Resumen del build
-          - task: PowerShell@2
+          - task: Bash@3
             displayName: 'Build summary'
             inputs:
               targetType: 'inline'
               script: |
-                Write-Host "## 🎉 Deployment Package Built Successfully"
-                Write-Host ""
-                Write-Host "**Version**: $(GetVersionInfo.packageVersion)"
-                Write-Host "**Commit**: $(GetVersionInfo.commitHash)"
-                Write-Host "**Forms**: $(GenerateManifest.formCount)"
-                Write-Host ""
-                Write-Host "### 📥 Download"
-                Write-Host "El paquete está disponible en los artefactos del build"
-                Write-Host ""
-                Write-Host "### 📤 Upload Instructions"
-                Write-Host "1. Descarga el ZIP desde los artefactos"
-                Write-Host "2. Transfiere al servidor offline"
-                Write-Host "3. Sube vía: /admin/upload-forms"
+                echo "## 🎉 Deployment Package Built Successfully"
+                echo ""
+                echo "**Build Date**: $(GetBuildMetadata.buildDate)"
+                echo "**Commit**: $(GetBuildMetadata.commitHash)"
+                echo "**Forms Built**: $(GenerateManifest.formCount)"
+                echo ""
+                echo "### 📦 Forms with Independent Versions"
+
+                # Listar forms con sus versiones y tags
+                CHANGED_FORMS="$(DetectChangedForms.changedForms)"
+                for form_name in $CHANGED_FORMS; do
+                  if [ -f "$form_name/package.json" ]; then
+                    FORM_VERSION=$(jq -r '.version' "$form_name/package.json")
+                    echo "- **$form_name**: v$FORM_VERSION (tag: ${form_name}-v${FORM_VERSION})"
+                  fi
+                done
+
+                echo ""
+                echo "### 📥 Download"
+                echo "Los paquetes individuales están disponibles en los artefactos del build"
+                echo ""
+                echo "### 📤 Upload Instructions"
+                echo "1. Descarga el ZIP específico del form desde los artefactos"
+                echo "2. Transfiere al servidor offline"
+                echo "3. Sube vía: /admin/upload-forms"
+                echo ""
+                echo "### ℹ️ Versioning System"
+                echo "- Each form has **independent versioning**"
+                echo "- Git tags are the **source of truth** (format: {form-name}-v{version})"
+                echo "- package.json versions are auto-corrected if manually changed"
