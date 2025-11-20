@@ -5,6 +5,7 @@
  * - Información básica del formulario
  * - Botón para mostrar modal con versión
  * - Fondo color naranja
+ * - Generación automática de ZIP en dist/
  */
 
 import { useState } from 'react';
