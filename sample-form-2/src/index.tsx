@@ -28,7 +28,7 @@ interface FormProps {
 }
 
 const FORM_VERSION = "1.0.3";
-const FORM_NAME = "Material Design Sample v5";
+const FORM_NAME = "Material Design Sample - Teal Edition";
 
 export default function SampleForm2({ dashboardParams }: FormProps) {
   const [showModal, setShowModal] = useState(false);
@@ -50,7 +50,7 @@ export default function SampleForm2({ dashboardParams }: FormProps) {
     }}>
       {/* App Bar */}
       <div style={{
-        background: '#3f51b5',
+        background: '#009688',
         boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
         padding: '16px 24px',
         color: 'white'
