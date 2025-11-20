@@ -1,6 +1,6 @@
 {
   "name": "@tyconsa/bizuit-form-solicitud-vacaciones",
-  "version": "1.1.2",
+  "version": "1.0.0",
   "description": "Formulario de Solicitud de Vacaciones para Bizuit BPM",
   "main": "dist/form.js",
   "scripts": {
@@ -17,7 +17,12 @@
     "esbuild": "^0.24.0",
     "typescript": "^5.0.0"
   },
-  "keywords": ["bizuit", "custom-form", "solicitud-vacaciones", "hr"],
+  "keywords": [
+    "bizuit",
+    "custom-form",
+    "solicitud-vacaciones",
+    "hr"
+  ],
   "author": "Tyconsa",
   "license": "MIT"
 }
