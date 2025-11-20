@@ -268,7 +268,7 @@ jobs:
           path: deployment-package/
           retention-days: 90  # 3 meses
 
-      - name: Create deployment ZIP and copy to dist directories
+      - name: Create deployment ZIP in upload directories
         run: |
           echo "📦 Creating deployment package ZIP..."
 
@@ -280,23 +280,24 @@ jobs:
 
           echo "✅ Created: $PACKAGE_NAME ($(wc -c < "$PACKAGE_NAME") bytes)"
 
-          # Copiar el ZIP a cada directorio dist/ de los forms compilados
+          # Copiar el ZIP a directorio upload/ de cada form compilado
           echo ""
-          echo "📋 Copying deployment ZIP to form dist directories..."
+          echo "📋 Copying deployment ZIP to form upload directories..."
 
           FORMS_TO_COPY="${{ steps.changed_forms.outputs.changed_forms }}"
 
           for form_name in $FORMS_TO_COPY; do
-            if [ -d "$form_name/dist" ]; then
-              cp "$PACKAGE_NAME" "$form_name/dist/"
-              echo "  ✅ Copied to: $form_name/dist/$PACKAGE_NAME"
+            if [ -d "$form_name" ]; then
+              mkdir -p "$form_name/upload"
+              cp "$PACKAGE_NAME" "$form_name/upload/"
+              echo "  ✅ Copied to: $form_name/upload/$PACKAGE_NAME"
             fi
           done
 
           echo ""
           echo "📊 Deployment ZIP available in:"
           echo "  - Root: $PACKAGE_NAME (for releases)"
-          echo "  - Each form's dist/ directory (for easy access)"
+          echo "  - Each form's upload/ directory (for custom-forms admin)"
 
       - name: Commit and push deployment ZIPs to repository
         run: |
@@ -306,8 +307,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Agregar solo los archivos ZIP en dist/
-          git add */dist/*.zip || true
+          # Agregar archivos ZIP y directorio upload/
+          git add */upload/*.zip || true
+          git add */upload/ || true
 
           # Verificar si hay cambios
           if git diff --staged --quiet; then
