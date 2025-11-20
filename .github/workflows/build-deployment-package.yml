@@ -24,6 +24,8 @@ jobs:
   build-deployment-package:
     name: Build Offline Deployment Package
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Necesario para hacer push al repositorio
 
     steps:
       - name: Checkout code
@@ -323,7 +325,7 @@ jobs:
                        -m "🤖 Automated commit by GitHub Actions"
 
             # Push usando el token del workflow
-            git push
+            git push origin HEAD:main
 
             echo "✅ Deployment ZIPs committed and pushed to repository"
           fi
