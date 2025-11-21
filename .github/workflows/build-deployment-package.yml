@@ -61,25 +61,62 @@ jobs:
         run: |
           echo "🔍 Detecting changed forms..."
 
-          # Obtener lista de forms modificados desde el último commit
-          # Buscar cambios en directorios que contengan src/ o package.json
-          CHANGED_FORMS=$(git diff --name-only HEAD~1 HEAD | grep -E '^[^/]+/(src/|package\.json)' | cut -d'/' -f1 | sort -u || true)
-
-          if [ -z "$CHANGED_FORMS" ]; then
-            echo "⚠️  No forms changed, building all forms"
-            # Si no hay cambios, buscar todos los forms
+          # Detección inteligente de cambios
+          # Si es workflow_dispatch, construir todos los forms
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "📦 Manual trigger detected - building all forms"
             CHANGED_FORMS=$(find . -type f -name "package.json" -not -path "*/node_modules/*" -not -path "./package.json" | xargs dirname | xargs -n1 basename)
+          else
+            # Para push events, detectar solo los forms que realmente cambiaron
+            echo "🔍 Analyzing changes from the push event..."
+
+            # Usar el rango de commits del push event
+            if [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+              # Push normal con historial
+              BEFORE_SHA="${{ github.event.before }}"
+              AFTER_SHA="${{ github.event.after }}"
+              echo "  Comparing: ${BEFORE_SHA:0:7}...${AFTER_SHA:0:7}"
+
+              # Detectar archivos cambiados en el rango del push
+              CHANGED_FILES=$(git diff --name-only "$BEFORE_SHA" "$AFTER_SHA" 2>/dev/null || git diff --name-only HEAD~1 HEAD)
+            else
+              # Primer push o branch nuevo
+              echo "  First push detected, checking last commit"
+              CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-tree --name-only -r HEAD)
+            fi
+
+            # Filtrar solo cambios en forms (src/ o package.json de cada form)
+            CHANGED_FORMS=$(echo "$CHANGED_FILES" | grep -E '^[^/]+/(src/|package\.json)' | cut -d'/' -f1 | sort -u || true)
+
+            if [ -z "$CHANGED_FORMS" ]; then
+              echo "⚠️  No form changes detected in this push"
+              echo "  Changed files:"
+              echo "$CHANGED_FILES" | head -20
+              echo ""
+              echo "  ℹ️ No forms need to be rebuilt"
+              # Establecer un valor especial para indicar que no hay cambios
+              CHANGED_FORMS="NONE"
+            fi
           fi
 
-          # Convertir a array para GitHub Output
-          FORMS_ARRAY=$(echo "$CHANGED_FORMS" | tr '\n' ' ')
-          echo "changed_forms=$FORMS_ARRAY" >> $GITHUB_OUTPUT
+          # Guardar resultado
+          if [ "$CHANGED_FORMS" = "NONE" ]; then
+            echo "no_changes=true" >> $GITHUB_OUTPUT
+            echo "changed_forms=" >> $GITHUB_OUTPUT
+            echo "🔴 No forms to build - workflow will skip build steps"
+          else
+            echo "no_changes=false" >> $GITHUB_OUTPUT
+            # Convertir a array para GitHub Output
+            FORMS_ARRAY=$(echo "$CHANGED_FORMS" | tr '\n' ' ')
+            echo "changed_forms=$FORMS_ARRAY" >> $GITHUB_OUTPUT
 
-          echo "📝 Forms to build:"
-          echo "$CHANGED_FORMS"
+            echo "📝 Forms to build:"
+            echo "$CHANGED_FORMS"
+          fi
 
       - name: Calculate per-form versions (independent versioning)
         id: form_versions
+        if: steps.changed_forms.outputs.no_changes != 'true'
         run: |
           echo "🔢 Calculating independent versions for each form..."
           echo ""
@@ -197,6 +234,7 @@ jobs:
           cat /tmp/form_versions.txt >> $GITHUB_OUTPUT
 
       - name: Build changed forms
+        if: steps.changed_forms.outputs.no_changes != 'true'
         run: |
           echo "🔨 Building forms..."
 
@@ -267,6 +305,7 @@ jobs:
 
       - name: Generate manifest.json
         id: manifest
+        if: steps.changed_forms.outputs.no_changes != 'true'
         run: |
           echo "📋 Generating manifest.json..."
 
@@ -348,6 +387,7 @@ jobs:
           echo "form_count=$form_count" >> $GITHUB_OUTPUT
 
       - name: Create deployment package structure
+        if: steps.changed_forms.outputs.no_changes != 'true'
         run: |
           echo "📦 Creating deployment package structure..."
 
@@ -408,6 +448,7 @@ jobs:
           tree deployment-package || find deployment-package -type f
 
       - name: Verify deployment package structure
+        if: steps.changed_forms.outputs.no_changes != 'true'
         run: |
           echo "📋 Package structure:"
           tree deployment-package || find deployment-package -type f
@@ -501,6 +542,7 @@ jobs:
 
 
       - name: Create deployment ZIPs (one per form with independent versions)
+        if: steps.changed_forms.outputs.no_changes != 'true'
         run: |
           echo "📦 Creating individual deployment ZIPs for each form..."
 
@@ -716,6 +758,7 @@ jobs:
       # 2. Upload {form-name}
 
       - name: Commit and push deployment ZIPs and updated package.json files
+        if: steps.changed_forms.outputs.no_changes != 'true'
         run: |
           echo "📝 Committing deployment ZIPs and updated package.json files..."
 
@@ -844,7 +887,21 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Summary (No changes)
+        if: steps.changed_forms.outputs.no_changes == 'true'
+        run: |
+          echo "## ℹ️ No Forms Changed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "No form files were modified in this push. No deployment packages were created." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The workflow monitors changes to:" >> $GITHUB_STEP_SUMMARY
+          echo "- \`*/src/**\` - Source files of forms" >> $GITHUB_STEP_SUMMARY
+          echo "- \`*/package.json\` - Package configuration of forms" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "If you expected forms to be built, verify that your changes are in the correct directories." >> $GITHUB_STEP_SUMMARY
+
       - name: Summary
+        if: steps.changed_forms.outputs.no_changes != 'true'
         run: |
           echo "## 🎉 Deployment Package Built Successfully" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
