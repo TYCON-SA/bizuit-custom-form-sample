@@ -611,23 +611,106 @@ jobs:
           echo "  - VERSION.txt inside ZIP has full git information"
           echo "  - manifest.json has per-form git tags and commit URLs"
 
-      # Upload each form's ZIP as an individual artifact
-      # We check for each potential form and upload if it exists
-      - name: Upload sample-form-2 artifact
+      # Upload each form's ZIP as an individual artifact with dynamic name
+      # Since GitHub Actions doesn't support dynamic matrices, we need to generate the artifact names
+      - name: Generate artifact upload information
+        id: artifact_info
+        run: |
+          echo "📦 Generating artifact information..."
+
+          # Initialize JSON for artifact info
+          echo '{}' > artifact_info.json
+
+          CHANGED_FORMS="${{ steps.changed_forms.outputs.changed_forms }}"
+
+          for form_name in $CHANGED_FORMS; do
+            if [ -f "$form_name/upload/"*.zip ]; then
+              # Get the actual ZIP filename
+              ZIP_FILE=$(ls "$form_name/upload/"*.zip | head -1)
+              ZIP_BASENAME=$(basename "$ZIP_FILE" .zip)
+
+              # Extract version and hash from the ZIP filename
+              # Pattern: {form-name}-deployment-{version}-{hash}.zip
+              FORM_VERSION=$(jq -r '.version' "$form_name/package.json")
+              SHORT_HASH="${{ steps.build_metadata.outputs.short_hash }}"
+
+              # Store the artifact name for this form
+              echo "${form_name}_artifact_name=${ZIP_BASENAME}" >> $GITHUB_OUTPUT
+
+              # Add to JSON for reference
+              jq --arg form "$form_name" \
+                 --arg name "$ZIP_BASENAME" \
+                 --arg path "$ZIP_FILE" \
+                 '. + {($form): {"name": $name, "path": $path}}' \
+                 artifact_info.json > artifact_info.tmp && mv artifact_info.tmp artifact_info.json
+
+              echo "  ✅ ${form_name}: ${ZIP_BASENAME}"
+            fi
+          done
+
+          echo "📋 Artifact information:"
+          cat artifact_info.json
+
+      # Upload artifacts for each form dynamically
+      # We'll create a script that handles all forms
+      - name: Upload all form artifacts
+        run: |
+          echo "📤 Uploading artifacts for all changed forms..."
+
+          CHANGED_FORMS="${{ steps.changed_forms.outputs.changed_forms }}"
+
+          for form_name in $CHANGED_FORMS; do
+            if [ -d "$form_name/upload" ] && ls "$form_name/upload/"*.zip 1> /dev/null 2>&1; then
+              # Get the actual ZIP filename
+              ZIP_FILE=$(ls "$form_name/upload/"*.zip | head -1)
+              ZIP_BASENAME=$(basename "$ZIP_FILE" .zip)
+
+              echo ""
+              echo "📦 Processing artifact for: $form_name"
+              echo "   ZIP file: $(basename $ZIP_FILE)"
+              echo "   Artifact name: $ZIP_BASENAME"
+
+              # Create a marker file with the artifact name for the next step
+              echo "$ZIP_BASENAME" > "${form_name}_artifact_name.txt"
+            fi
+          done
+
+      # Upload sample-form-2 artifact if it exists
+      - name: Prepare sample-form-2 artifact name
+        if: hashFiles('sample-form-2/upload/*.zip') != ''
+        run: |
+          ZIP_FILE=$(ls sample-form-2/upload/*.zip | head -1)
+          ZIP_BASENAME=$(basename "$ZIP_FILE" .zip)
+          echo "SAMPLE_FORM_2_ARTIFACT=$ZIP_BASENAME" >> $GITHUB_ENV
+
+      - name: Upload sample-form-2
         if: hashFiles('sample-form-2/upload/*.zip') != ''
         uses: actions/upload-artifact@v4
         with:
-          name: sample-form-2-deployment
+          name: ${{ env.SAMPLE_FORM_2_ARTIFACT }}
           path: sample-form-2/upload/*.zip
           retention-days: 90
 
-      - name: Upload dashboard-integration-demo artifact
+      # Upload dashboard-integration-demo artifact if it exists
+      - name: Prepare dashboard-integration-demo artifact name
+        if: hashFiles('dashboard-integration-demo/upload/*.zip') != ''
+        run: |
+          ZIP_FILE=$(ls dashboard-integration-demo/upload/*.zip | head -1)
+          ZIP_BASENAME=$(basename "$ZIP_FILE" .zip)
+          echo "DASHBOARD_DEMO_ARTIFACT=$ZIP_BASENAME" >> $GITHUB_ENV
+
+      - name: Upload dashboard-integration-demo
         if: hashFiles('dashboard-integration-demo/upload/*.zip') != ''
         uses: actions/upload-artifact@v4
         with:
-          name: dashboard-integration-demo-deployment
+          name: ${{ env.DASHBOARD_DEMO_ARTIFACT }}
           path: dashboard-integration-demo/upload/*.zip
           retention-days: 90
+
+      # Add more forms here as needed
+      # For any new form, follow the same pattern:
+      # 1. Prepare {form-name} artifact name
+      # 2. Upload {form-name}
 
       - name: Commit and push deployment ZIPs and updated package.json files
         run: |
