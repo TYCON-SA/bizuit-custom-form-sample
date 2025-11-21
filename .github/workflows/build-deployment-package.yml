@@ -624,9 +624,9 @@ jobs:
           CHANGED_FORMS="${{ steps.changed_forms.outputs.changed_forms }}"
 
           for form_name in $CHANGED_FORMS; do
-            if [ -f "$form_name/upload/"*.zip ]; then
-              # Get the actual ZIP filename
-              ZIP_FILE=$(ls "$form_name/upload/"*.zip | head -1)
+            if [ -d "$form_name/upload" ] && ls "$form_name/upload/"*.zip 1> /dev/null 2>&1; then
+              # Get the NEWEST ZIP filename (the one we just created)
+              ZIP_FILE=$(ls -t "$form_name/upload/"*.zip | head -1)
               ZIP_BASENAME=$(basename "$ZIP_FILE" .zip)
 
               # Extract version and hash from the ZIP filename
@@ -661,8 +661,9 @@ jobs:
 
           for form_name in $CHANGED_FORMS; do
             if [ -d "$form_name/upload" ] && ls "$form_name/upload/"*.zip 1> /dev/null 2>&1; then
-              # Get the actual ZIP filename
-              ZIP_FILE=$(ls "$form_name/upload/"*.zip | head -1)
+              # Get the NEWEST ZIP filename (the one we just created)
+              # Use ls -t to sort by modification time, newest first
+              ZIP_FILE=$(ls -t "$form_name/upload/"*.zip | head -1)
               ZIP_BASENAME=$(basename "$ZIP_FILE" .zip)
 
               echo ""
@@ -679,7 +680,8 @@ jobs:
       - name: Prepare sample-form-2 artifact name
         if: hashFiles('sample-form-2/upload/*.zip') != ''
         run: |
-          ZIP_FILE=$(ls sample-form-2/upload/*.zip | head -1)
+          # Get the NEWEST ZIP file (sort by modification time)
+          ZIP_FILE=$(ls -t sample-form-2/upload/*.zip | head -1)
           ZIP_BASENAME=$(basename "$ZIP_FILE" .zip)
           echo "SAMPLE_FORM_2_ARTIFACT=$ZIP_BASENAME" >> $GITHUB_ENV
 
@@ -695,7 +697,8 @@ jobs:
       - name: Prepare dashboard-integration-demo artifact name
         if: hashFiles('dashboard-integration-demo/upload/*.zip') != ''
         run: |
-          ZIP_FILE=$(ls dashboard-integration-demo/upload/*.zip | head -1)
+          # Get the NEWEST ZIP file (sort by modification time)
+          ZIP_FILE=$(ls -t dashboard-integration-demo/upload/*.zip | head -1)
           ZIP_BASENAME=$(basename "$ZIP_FILE" .zip)
           echo "DASHBOARD_DEMO_ARTIFACT=$ZIP_BASENAME" >> $GITHUB_ENV
 
