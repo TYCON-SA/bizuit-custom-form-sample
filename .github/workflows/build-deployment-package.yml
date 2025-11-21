@@ -498,15 +498,8 @@ jobs:
             echo "${FORM_NAME}:${FORM_VERSION}:${SHORT_HASH}:${ARTIFACT_PATH}" >> upload_list.txt
           done
 
-      # Use actions/upload-artifact for each form
-      # This is a limitation of GitHub Actions - we can't dynamically create steps
-      # So we'll upload all artifacts in a single archive
-      - name: Upload all deployment packages
-        uses: actions/upload-artifact@v4
-        with:
-          name: all-deployment-packages-${{ steps.build_metadata.outputs.short_hash }}
-          path: artifact-*/
-          retention-days: 90
+      # Note: GitHub Actions doesn't support dynamic artifact uploads
+      # Each form's ZIP will be committed to the repository's upload/ directory instead
 
 
       - name: Create deployment ZIPs (one per form with independent versions)
