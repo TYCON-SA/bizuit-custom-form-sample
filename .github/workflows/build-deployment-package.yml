@@ -534,35 +534,46 @@ jobs:
               RELEASE_NOTES=$(cat /tmp/release_notes.txt 2>/dev/null || echo "Deployment package")
               release_notes_json=$(echo "$RELEASE_NOTES" | jq -Rs .)
 
-              # Crear manifest individual con SOLO este form
-              cat > "temp-package-$form_name/manifest.json" << MANIFEST_EOF
-              {
-                "packageVersion": "$PACKAGE_VERSION",
-                "buildDate": "${{ steps.build_metadata.outputs.build_date }}",
-                "commitHash": "${{ steps.build_metadata.outputs.commit_hash }}",
-                "commitShortHash": "${{ steps.build_metadata.outputs.short_hash }}",
-                "repositoryUrl": "${{ github.server_url }}/${{ github.repository }}",
-                "commitUrl": "${{ github.server_url }}/${{ github.repository }}/commit/${{ steps.build_metadata.outputs.commit_hash }}",
-                "workflowRunUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                "forms": [
-                  {
-                    "formName": "$form_name",
-                    "processName": "$process_name",
-                    "version": "$FORM_VERSION",
-                    "gitTag": "${form_name}-v${FORM_VERSION}",
-                    "description": "$description",
-                    "author": "$author",
-                    "releaseNotes": $release_notes_json,
-                    "sizeBytes": $size,
-                    "path": "forms/$form_name/form.js"
-                  }
-                ]
-              }
-              MANIFEST_EOF
-
-              # Pretty print the manifest
-              jq '.' "temp-package-$form_name/manifest.json" > "temp-package-$form_name/manifest.tmp" && \
-                mv "temp-package-$form_name/manifest.tmp" "temp-package-$form_name/manifest.json"
+              # Crear manifest individual con SOLO este form usando jq
+              jq -n \
+                --arg packageVersion "$PACKAGE_VERSION" \
+                --arg buildDate "${{ steps.build_metadata.outputs.build_date }}" \
+                --arg commitHash "${{ steps.build_metadata.outputs.commit_hash }}" \
+                --arg commitShortHash "${{ steps.build_metadata.outputs.short_hash }}" \
+                --arg repositoryUrl "${{ github.server_url }}/${{ github.repository }}" \
+                --arg commitUrl "${{ github.server_url }}/${{ github.repository }}/commit/${{ steps.build_metadata.outputs.commit_hash }}" \
+                --arg workflowRunUrl "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+                --arg formName "$form_name" \
+                --arg processName "$process_name" \
+                --arg version "$FORM_VERSION" \
+                --arg gitTag "${form_name}-v${FORM_VERSION}" \
+                --arg description "$description" \
+                --arg author "$author" \
+                --argjson releaseNotes "$release_notes_json" \
+                --arg sizeBytes "$size" \
+                --arg path "forms/$form_name/form.js" \
+                '{
+                  packageVersion: $packageVersion,
+                  buildDate: $buildDate,
+                  commitHash: $commitHash,
+                  commitShortHash: $commitShortHash,
+                  repositoryUrl: $repositoryUrl,
+                  commitUrl: $commitUrl,
+                  workflowRunUrl: $workflowRunUrl,
+                  forms: [
+                    {
+                      formName: $formName,
+                      processName: $processName,
+                      version: $version,
+                      gitTag: $gitTag,
+                      description: $description,
+                      author: $author,
+                      releaseNotes: $releaseNotes,
+                      sizeBytes: ($sizeBytes | tonumber),
+                      path: $path
+                    }
+                  ]
+                }' > "temp-package-$form_name/manifest.json"
 
               # Copiar VERSION.txt
               cp deployment-package/VERSION.txt "temp-package-$form_name/"
