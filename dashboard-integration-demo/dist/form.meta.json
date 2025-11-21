@@ -1,8 +1,8 @@
 {
   "formName": "dashboard-integration-demo",
-  "version": "1.1.5",
-  "builtAt": "2025-11-20T23:00:35.273Z",
-  "sizeBytes": 11833,
+  "version": "1.1.4",
+  "builtAt": "2025-11-21T14:17:21.568Z",
+  "sizeBytes": 11921,
   "entryPoint": "./src/index.tsx",
   "externals": [
     "react",

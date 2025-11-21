@@ -10,6 +10,7 @@
  */
 
 import { useState } from 'react';
+import { version as FORM_VERSION } from '../package.json';
 
 interface DashboardParameters {
   instanceId?: string;
@@ -27,9 +28,8 @@ interface FormProps {
   dashboardParams?: DashboardParameters | null;
 }
 
-const FORM_VERSION = "1.1.2";
 const FORM_NAME = "Dashboard Integration Demo - Enhanced v3";
-const LAST_UPDATED = "2025-11-21 10:29:59";
+const LAST_UPDATED = new Date().toISOString().replace('T', ' ').slice(0, 19);
 
 export default function DashboardIntegrationDemoForm({ dashboardParams }: FormProps) {
   const [showModal, setShowModal] = useState(false);
