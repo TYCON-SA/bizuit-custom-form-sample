@@ -472,50 +472,6 @@ jobs:
           path: artifact-dashboard-integration-demo/
           retention-days: 90
 
-      - name: Upload aprobacion-gastos artifact
-        if: contains(steps.changed_forms.outputs.changed_forms, 'aprobacion-gastos')
-        run: |
-          FORM_VERSION=$(jq -r '.version' aprobacion-gastos/package.json)
-          echo "form_version=$FORM_VERSION" >> $GITHUB_OUTPUT
-        id: aprobacion_gastos_version
-
-      - name: Upload aprobacion-gastos artifact (with version)
-        if: contains(steps.changed_forms.outputs.changed_forms, 'aprobacion-gastos')
-        uses: actions/upload-artifact@v4
-        with:
-          name: aprobacion-gastos-deployment-${{ steps.aprobacion_gastos_version.outputs.form_version }}-${{ steps.build_metadata.outputs.short_hash }}
-          path: artifact-aprobacion-gastos/
-          retention-days: 90
-
-      - name: Upload solicitud-vacaciones artifact
-        if: contains(steps.changed_forms.outputs.changed_forms, 'solicitud-vacaciones')
-        run: |
-          FORM_VERSION=$(jq -r '.version' solicitud-vacaciones/package.json)
-          echo "form_version=$FORM_VERSION" >> $GITHUB_OUTPUT
-        id: solicitud_vacaciones_version
-
-      - name: Upload solicitud-vacaciones artifact (with version)
-        if: contains(steps.changed_forms.outputs.changed_forms, 'solicitud-vacaciones')
-        uses: actions/upload-artifact@v4
-        with:
-          name: solicitud-vacaciones-deployment-${{ steps.solicitud_vacaciones_version.outputs.form_version }}-${{ steps.build_metadata.outputs.short_hash }}
-          path: artifact-solicitud-vacaciones/
-          retention-days: 90
-
-      - name: Upload solicitud-soporte artifact
-        if: contains(steps.changed_forms.outputs.changed_forms, 'solicitud-soporte')
-        run: |
-          FORM_VERSION=$(jq -r '.version' solicitud-soporte/package.json)
-          echo "form_version=$FORM_VERSION" >> $GITHUB_OUTPUT
-        id: solicitud_soporte_version
-
-      - name: Upload solicitud-soporte artifact (with version)
-        if: contains(steps.changed_forms.outputs.changed_forms, 'solicitud-soporte')
-        uses: actions/upload-artifact@v4
-        with:
-          name: solicitud-soporte-deployment-${{ steps.solicitud_soporte_version.outputs.form_version }}-${{ steps.build_metadata.outputs.short_hash }}
-          path: artifact-solicitud-soporte/
-          retention-days: 90
 
       - name: Create deployment ZIPs (one per form with independent versions)
         run: |
