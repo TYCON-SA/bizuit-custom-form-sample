@@ -1,6 +1,6 @@
 {
   "name": "@tyconsa/bizuit-form-sample-2",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Formulario de ejemplo con Material Design de Google",
   "main": "dist/form.js",
   "scripts": {
