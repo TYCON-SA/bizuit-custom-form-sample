@@ -498,66 +498,6 @@ jobs:
             echo "${FORM_NAME}:${FORM_VERSION}:${SHORT_HASH}:${ARTIFACT_PATH}" >> upload_list.txt
           done
 
-      # Upload individual artifacts for each form
-      # We'll use a script-based approach since GitHub Actions doesn't support dynamic steps
-      - name: Upload individual form artifacts
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-            const artifact = require('@actions/artifact');
-            const artifactClient = new artifact.DefaultArtifactClient();
-
-            // Read the changed forms
-            const changedForms = '${{ steps.changed_forms.outputs.changed_forms }}'.split(' ').filter(f => f);
-
-            // Upload each form's artifact individually
-            for (const formName of changedForms) {
-              const artifactDir = `artifact-${formName}`;
-
-              if (fs.existsSync(artifactDir)) {
-                // Get version from package.json
-                const packageJson = JSON.parse(fs.readFileSync(`${formName}/package.json`, 'utf8'));
-                const version = packageJson.version || '1.0.0';
-                const shortHash = '${{ steps.build_metadata.outputs.short_hash }}';
-
-                const artifactName = `${formName}-deployment-${version}-${shortHash}`;
-
-                console.log(`📦 Uploading artifact: ${artifactName}`);
-                console.log(`   Directory: ${artifactDir}`);
-
-                // Get all files in the artifact directory
-                const files = [];
-                const getAllFiles = (dir) => {
-                  const items = fs.readdirSync(dir);
-                  items.forEach(item => {
-                    const fullPath = path.join(dir, item);
-                    if (fs.statSync(fullPath).isDirectory()) {
-                      getAllFiles(fullPath);
-                    } else {
-                      files.push(fullPath);
-                    }
-                  });
-                };
-
-                getAllFiles(artifactDir);
-
-                if (files.length > 0) {
-                  await artifactClient.uploadArtifact(
-                    artifactName,
-                    files,
-                    artifactDir,
-                    { retentionDays: 90 }
-                  );
-                  console.log(`   ✅ Successfully uploaded ${files.length} files`);
-                } else {
-                  console.log(`   ⚠️ No files found in ${artifactDir}`);
-                }
-              } else {
-                console.log(`⚠️ Artifact directory not found: ${artifactDir}`);
-              }
-            }
 
 
       - name: Create deployment ZIPs (one per form with independent versions)
@@ -670,6 +610,24 @@ jobs:
           echo "  - ZIP filename includes INDEPENDENT version per form + commit hash"
           echo "  - VERSION.txt inside ZIP has full git information"
           echo "  - manifest.json has per-form git tags and commit URLs"
+
+      # Upload each form's ZIP as an individual artifact
+      # We check for each potential form and upload if it exists
+      - name: Upload sample-form-2 artifact
+        if: hashFiles('sample-form-2/upload/*.zip') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample-form-2-deployment
+          path: sample-form-2/upload/*.zip
+          retention-days: 90
+
+      - name: Upload dashboard-integration-demo artifact
+        if: hashFiles('dashboard-integration-demo/upload/*.zip') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-integration-demo-deployment
+          path: dashboard-integration-demo/upload/*.zip
+          retention-days: 90
 
       - name: Commit and push deployment ZIPs and updated package.json files
         run: |
