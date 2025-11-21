@@ -52,7 +52,7 @@ export default function DashboardIntegrationDemoForm({ dashboardParams }: FormPr
             </h1>
 
             <p className="text-lg text-gray-600 mb-2">
-              Formulario de demostración para BIZUIT Custom Forms - Enhanced Edition 🎯
+              Formulario de demostración para BIZUIT Custom Forms ARIEL- Enhanced Edition 🎯
             </p>
 
             <div className="inline-block px-4 py-2 bg-cyan-50 border-2 border-cyan-200 rounded-full">
