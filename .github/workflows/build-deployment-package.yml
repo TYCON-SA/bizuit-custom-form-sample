@@ -527,8 +527,51 @@ jobs:
               # Crear estructura temporal para este form
               mkdir -p "temp-package-$form_name"
 
-              # Copiar manifest.json y VERSION.txt
-              cp deployment-package/manifest.json "temp-package-$form_name/"
+              # Crear un manifest.json INDIVIDUAL para este form específico
+              # Primero, extraer la info de este form del manifest general
+              PACKAGE_VERSION="1.0.$(date +%Y%m%d%H%M)"
+
+              # Obtener información del form
+              description=$(jq -r '.description // "Custom form"' "$form_name/package.json")
+              author=$(jq -r '.author // "Bizuit Team"' "$form_name/package.json")
+              process_name=$(echo "$form_name" | sed -r 's/(^|-)([a-z])/\U\2/g')
+              size=$(wc -c < "$form_name/dist/form.js")
+
+              # Leer release notes
+              RELEASE_NOTES=$(cat /tmp/release_notes.txt 2>/dev/null || echo "Deployment package")
+              release_notes_json=$(echo "$RELEASE_NOTES" | jq -Rs .)
+
+              # Crear manifest individual con SOLO este form
+              cat > "temp-package-$form_name/manifest.json" << MANIFEST_EOF
+              {
+                "packageVersion": "$PACKAGE_VERSION",
+                "buildDate": "${{ steps.build_metadata.outputs.build_date }}",
+                "commitHash": "${{ steps.build_metadata.outputs.commit_hash }}",
+                "commitShortHash": "${{ steps.build_metadata.outputs.short_hash }}",
+                "repositoryUrl": "${{ github.server_url }}/${{ github.repository }}",
+                "commitUrl": "${{ github.server_url }}/${{ github.repository }}/commit/${{ steps.build_metadata.outputs.commit_hash }}",
+                "workflowRunUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "forms": [
+                  {
+                    "formName": "$form_name",
+                    "processName": "$process_name",
+                    "version": "$FORM_VERSION",
+                    "gitTag": "${form_name}-v${FORM_VERSION}",
+                    "description": "$description",
+                    "author": "$author",
+                    "releaseNotes": $release_notes_json,
+                    "sizeBytes": $size,
+                    "path": "forms/$form_name/form.js"
+                  }
+                ]
+              }
+              MANIFEST_EOF
+
+              # Pretty print the manifest
+              jq '.' "temp-package-$form_name/manifest.json" > "temp-package-$form_name/manifest.tmp" && \
+                mv "temp-package-$form_name/manifest.tmp" "temp-package-$form_name/manifest.json"
+
+              # Copiar VERSION.txt
               cp deployment-package/VERSION.txt "temp-package-$form_name/"
 
               # Copiar solo este form
