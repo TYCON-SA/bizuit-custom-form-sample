@@ -129,7 +129,7 @@ export default function SampleForm2({ dashboardParams }: FormProps) {
                   Última Actualización
                 </div>
                 <div style={{ color: '#212121', fontSize: '16px', fontWeight: '500' }}>
-                  {LAST_UPDATED}
+                  {LAST_UPDATED} {/* Updated to trigger workflow with artifact naming fix */}
                 </div>
               </div>
               <div style={{ marginBottom: '16px' }}>
