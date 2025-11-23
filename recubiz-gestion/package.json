@@ -4,7 +4,8 @@
   "description": "Formulario de gestión de cobranzas Recubiz",
   "main": "dist/form.js",
   "scripts": {
-    "build": "node ../build-form.js ./src/index.tsx ./dist/form.js recubiz-gestion",
+    "build": "npm run build:prod && npm run build:dev",
+    "build:prod": "node ../build-form.js ./src/index.tsx ./dist/form.js recubiz-gestion",
     "build:dev": "node ../build-form-dev.js ./src/index.tsx ./dist/form.dev.js recubiz-gestion",
     "dev": "node ../build-form.js ./src/index.tsx ./dist/form.js recubiz-gestion --watch"
   },
