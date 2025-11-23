@@ -30,24 +30,67 @@ interface FormProps {
   dashboardParams?: DashboardParameters | null;
 }
 
-interface Deuda {
-  id: string;
-  deudor: string;
-  documento: string;
-  montoTotal: number;
-  deudaActual: number;
-  fechaAlta: string;
-  estado: 'nueva' | 'gestionando' | 'finalizada';
-  direccion: string;
-  telefono: string;
-  email: string;
+// Estructura basada en el XSD real del sistema
+interface DatosPersonales {
+  id: number;
+  nombre: string;
+  cuit?: string;
+  idTipoDocumento?: number;
+  numeroDocumento?: string;
+  fechaNacimiento?: string;
+  sexo?: string;
+  active?: boolean;
 }
 
 interface Contacto {
+  id: string | number;
+  idTipoContacto?: number;
+  tipoContacto?: string;
+  tipo?: string;  // Para compatibilidad con UI
+  fecha?: string;
+  contacto?: string;
+  valor?: string;  // Para compatibilidad con UI
+  estado?: number | string;
+  piso?: string;
+  depto?: string;
+  cp?: string;
+  localidad?: string;
+  provincia?: string;
+  active?: boolean;
+}
+
+interface DetalleDeuda {
+  id: number;
+  fecha: string;
+  importeOriginal: number;
+  importe: number;
+  producto?: string;
+  acreedorOriginal?: string;
+  active?: boolean;
+  descripcion?: string;
+  grupo?: string;
+  deudaReal?: number;
+}
+
+interface DeudaItem {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  fecha: string;
+  active?: boolean;
+  detalles: DetalleDeuda[];
+}
+
+// Para gestión - estructura simplificada para UI
+interface Deuda {
   id: string;
-  tipo: string;
-  valor: string;
-  estado: string;
+  deudor: string;
+  numeroDocumento: string;
+  cuit: string;
+  fechaNacimiento: string;
+  fechaAlta: string;
+  estado: 'nueva' | 'gestionando' | 'finalizada';
+  detalles: DetalleDeuda[];
 }
 
 interface Accion {
@@ -66,15 +109,22 @@ interface Accion {
 const MOCK_DEUDAS_NUEVAS: Deuda[] = [
   {
     id: 'D-2024-001',
-    deudor: 'Juan Carlos Pérez',
-    documento: '20-35678901-4',
-    montoTotal: 150000,
-    deudaActual: 165000,
+    deudor: 'CABRERA OMAR',
+    numeroDocumento: '28190044',
+    cuit: '20281900448',
+    fechaNacimiento: '1981-03-18',
     fechaAlta: '2024-01-15',
     estado: 'nueva',
-    direccion: 'Av. Colón 1234, Córdoba',
-    telefono: '+54 351 123-4567',
-    email: 'juan.perez@email.com'
+    detalles: [
+      {
+        id: 1,
+        fecha: '2018-06-01',
+        importeOriginal: 40000.00,
+        importe: 179600.00,
+        producto: '1040754305',
+        descripcion: 'A3 F011143DEPPHILIPS HP-6574 SAINT PERF744739NOKIA 100 MOVISTAR PRE'
+      }
+    ]
   }
 ];
 
@@ -82,26 +132,48 @@ const MOCK_DEUDAS_HISTORIAL: Deuda[] = [
   {
     id: 'D-2023-089',
     deudor: 'María González',
-    documento: '27-45678902-3',
-    montoTotal: 80000,
-    deudaActual: 85000,
+    numeroDocumento: '27-45678902-3',
+    cuit: '27456789023',
+    fechaNacimiento: '1985-07-20',
     fechaAlta: '2023-12-10',
     estado: 'gestionando',
-    direccion: 'Calle San Martín 567, Córdoba',
-    telefono: '+54 351 987-6543',
-    email: 'maria.gonzalez@email.com'
+    detalles: [
+      {
+        id: 1,
+        fecha: '2023-10-15',
+        importeOriginal: 50000.00,
+        importe: 55000.00,
+        producto: '1040754306',
+        descripcion: 'Notebook Samsung Galaxy Book'
+      },
+      {
+        id: 2,
+        fecha: '2023-11-20',
+        importeOriginal: 30000.00,
+        importe: 30000.00,
+        producto: '1040754307',
+        descripcion: 'Mouse Logitech MX Master 3'
+      }
+    ]
   },
   {
     id: 'D-2023-045',
     deudor: 'Pedro Martínez',
-    documento: '23-12345678-9',
-    montoTotal: 120000,
-    deudaActual: 95000,
+    numeroDocumento: '23-12345678-9',
+    cuit: '23123456789',
+    fechaNacimiento: '1978-05-10',
     fechaAlta: '2023-08-20',
     estado: 'gestionando',
-    direccion: 'Calle 50 N° 456, La Plata',
-    telefono: '+54 221 456-7890',
-    email: 'pedro.martinez@email.com'
+    detalles: [
+      {
+        id: 1,
+        fecha: '2023-07-05',
+        importeOriginal: 95000.00,
+        importe: 95000.00,
+        producto: '1040754308',
+        descripcion: 'Smart TV 55" Samsung QLED'
+      }
+    ]
   }
 ];
 
@@ -109,6 +181,34 @@ const MOCK_CONTACTOS: Contacto[] = [
   { id: 'C1', tipo: 'Teléfono Móvil', valor: '351 663 9967', estado: 'INICIAL' },
   { id: 'C2', tipo: 'Teléfono Laboral', valor: '351 445 5566', estado: 'INICIAL' },
   { id: 'C3', tipo: 'Email Personal', valor: 'deudor@email.com', estado: 'INICIAL' }
+];
+
+// Acciones previas (readonly - ya registradas en gestiones anteriores)
+const MOCK_ACCIONES_PREVIAS: Accion[] = [
+  {
+    id: 'A001',
+    fecha: '15/01/2024',
+    hora: '10:30',
+    tipo: 'Gestión',
+    contacto: 'Teléfono Móvil: 351 663 9967',
+    observaciones: 'Primera llamada telefónica. No contesta. Se deja mensaje.'
+  },
+  {
+    id: 'A002',
+    fecha: '16/01/2024',
+    hora: '14:15',
+    tipo: 'Gestión',
+    contacto: 'Email Personal: deudor@email.com',
+    observaciones: 'Envío de email con detalle de deuda y opciones de pago.'
+  },
+  {
+    id: 'A003',
+    fecha: '18/01/2024',
+    hora: '11:00',
+    tipo: 'Gestión',
+    contacto: 'Teléfono Móvil: 351 663 9967',
+    observaciones: 'Contacto telefónico exitoso. Promete pago parcial en 48hs.'
+  }
 ];
 
 const TIPOS_ACCION: ComboOption[] = [
@@ -133,18 +233,23 @@ const MOTIVOS_RECHAZO: ComboOption[] = [
 // HELPER COMPONENTS
 // ============================================================================
 
-function DeudaRow({ deuda, onClick }: {
+function DeudaRow({ deuda, onClick, index }: {
   deuda: Deuda;
   onClick: () => void;
+  index: number;
 }) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount);
   };
 
+  const totalDeuda = deuda.detalles.reduce((sum, d) => sum + d.importe, 0);
+
   return (
     <tr
       onClick={onClick}
-      className="hover:bg-orange-50 cursor-pointer transition-colors"
+      className={`hover:bg-orange-50 cursor-pointer transition-colors ${
+        index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
+      }`}
     >
       <td className="px-6 py-4 whitespace-nowrap">
         <span className="text-sm font-medium text-gray-900">{deuda.id}</span>
@@ -153,10 +258,10 @@ function DeudaRow({ deuda, onClick }: {
         <div className="text-sm font-medium text-gray-900">{deuda.deudor}</div>
       </td>
       <td className="px-6 py-4">
-        <span className="text-sm text-gray-600">{deuda.documento}</span>
+        <span className="text-sm text-gray-600">{deuda.numeroDocumento}</span>
       </td>
       <td className="px-6 py-4">
-        <span className="text-sm font-semibold text-gray-900">{formatCurrency(deuda.deudaActual)}</span>
+        <span className="text-sm font-semibold text-gray-900">{formatCurrency(totalDeuda)}</span>
       </td>
       <td className="px-6 py-4">
         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -167,10 +272,11 @@ function DeudaRow({ deuda, onClick }: {
   );
 }
 
-function ContactoRow({ contacto, isSelected, onClick }: {
+function ContactoRow({ contacto, isSelected, onClick, index }: {
   contacto: Contacto;
   isSelected: boolean;
   onClick: () => void;
+  index: number;
 }) {
   const tipoText = contacto.tipo;
   const valorText = contacto.valor;
@@ -180,9 +286,16 @@ function ContactoRow({ contacto, isSelected, onClick }: {
     <tr
       onClick={onClick}
       className={`cursor-pointer transition-colors ${
-        isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'
+        isSelected ? 'bg-orange-50 border-l-4 border-orange-500' : index % 2 === 0 ? 'bg-gray-50 hover:bg-orange-50 border-l-4 border-transparent' : 'bg-white hover:bg-orange-50 border-l-4 border-transparent'
       }`}
     >
+      <td className="px-2 py-4 w-12">
+        {isSelected && (
+          <svg className="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+        )}
+      </td>
       <td className="px-6 py-4">
         <span className="text-sm font-medium text-gray-900">{tipoText}</span>
       </td>
@@ -198,14 +311,19 @@ function ContactoRow({ contacto, isSelected, onClick }: {
   );
 }
 
-function AccionRow({ accion }: { accion: Accion }) {
+function AccionRow({ accion, index, onClick }: { accion: Accion; index: number; onClick: () => void }) {
   return (
-    <tr>
+    <tr
+      onClick={onClick}
+      className={`cursor-pointer hover:bg-orange-50 transition-colors ${
+        index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
+      }`}
+    >
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{accion.fecha}</td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{accion.hora}</td>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{accion.tipo}</td>
       <td className="px-6 py-4 text-sm text-gray-600">{accion.contacto}</td>
-      <td className="px-6 py-4 text-sm text-gray-900">{accion.observaciones}</td>
+      <td className="px-6 py-4 text-sm text-gray-900 truncate max-w-xs">{accion.observaciones}</td>
     </tr>
   );
 }
@@ -219,10 +337,13 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
   const [deudaActual, setDeudaActual] = useState<Deuda | null>(null);
   const [contactoSeleccionado, setContactoSeleccionado] = useState<Contacto | null>(null);
   const [observaciones, setObservaciones] = useState('');
-  const [acciones, setAcciones] = useState<Accion[]>([]);
+  const [accionesHistorial, setAccionesHistorial] = useState<Accion[]>(MOCK_ACCIONES_PREVIAS);
   const [mostrarRechazo, setMostrarRechazo] = useState(false);
   const [motivoRechazo, setMotivoRechazo] = useState('');
   const [descripcionRechazo, setDescripcionRechazo] = useState('');
+  const [mostrarConfirmacionFinalizar, setMostrarConfirmacionFinalizar] = useState(false);
+  const [mostrarConfirmacionSolicitar, setMostrarConfirmacionSolicitar] = useState(false);
+  const [accionSeleccionada, setAccionSeleccionada] = useState<Accion | null>(null);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount);
@@ -242,6 +363,11 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
   };
 
   const handleSolicitarNuevaDeuda = () => {
+    setMostrarConfirmacionSolicitar(true);
+  };
+
+  const handleConfirmarSolicitud = () => {
+    setMostrarConfirmacionSolicitar(false);
     setDeudaActual(MOCK_DEUDAS_NUEVAS[0]);
     setScreen('detail');
   };
@@ -288,26 +414,33 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
       observaciones: observaciones
     };
 
-    setAcciones([...acciones, nuevaAccion]);
+    setAccionesHistorial([...accionesHistorial, nuevaAccion]);
     setObservaciones('');
     alert('Acción registrada exitosamente');
   };
 
   const handleFinalizarGestion = () => {
-    if (acciones.length === 0) {
+    const totalAcciones = accionesHistorial.length;
+    if (totalAcciones === 0) {
       alert('Registre al menos una acción antes de finalizar');
       return;
     }
-    alert(`Gestión de deuda ${deudaActual?.id} finalizada\nAcciones registradas: ${acciones.length}`);
+    setMostrarConfirmacionFinalizar(true);
+  };
+
+  const handleConfirmarFinalizar = () => {
+    const totalAcciones = accionesHistorial.length;
+    alert(`Gestión de deuda ${deudaActual?.id} finalizada\nTotal de acciones: ${totalAcciones}`);
+    setMostrarConfirmacionFinalizar(false);
     setDeudaActual(null);
-    setAcciones([]);
+    setAccionesHistorial(MOCK_ACCIONES_PREVIAS);
     setContactoSeleccionado(null);
     setScreen('dashboard');
   };
 
   const handleVolverDashboard = () => {
     setDeudaActual(null);
-    setAcciones([]);
+    setAccionesHistorial(MOCK_ACCIONES_PREVIAS);
     setContactoSeleccionado(null);
     setScreen('dashboard');
   };
@@ -335,7 +468,7 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
             </div>
             <div className="flex items-center gap-4">
               {screen !== 'dashboard' && (
-                <Button variant="outline" onClick={handleVolverDashboard}>
+                <Button variant="default" onClick={handleVolverDashboard}>
                   ← Dashboard
                 </Button>
               )}
@@ -362,35 +495,117 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
               <p className="text-gray-600">Vista general del sistema de gestión de cobranzas</p>
             </div>
 
-            {/* Nueva Gestión Card */}
-            <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-l-4 border-orange-500 p-6">
-              <div className="flex items-start gap-4">
-                <div className="w-14 h-14 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <svg className="w-7 h-7 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Nueva Gestión */}
+              <div
+                className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-l-4 border-emerald-500 p-6 cursor-pointer"
+                onClick={handleSolicitarNuevaDeuda}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Nueva Gestión</p>
+                    <p className="text-lg font-bold text-gray-900">Solicitar deuda</p>
+                  </div>
+                  <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">Nueva Gestión</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Solicitar una nueva deuda para gestionar
-                  </p>
-                  <Button size="lg" onClick={handleSolicitarNuevaDeuda}>
-                    Solicitar Nueva Deuda
+                <div className="mt-2">
+                  <Button
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSolicitarNuevaDeuda();
+                    }}
+                    className="w-full"
+                  >
+                    + Solicitar
                   </Button>
+                </div>
+              </div>
+
+              {/* Total Gestiones */}
+              <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-l-4 border-orange-500 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Gestiones Activas</p>
+                    <p className="text-3xl font-bold text-gray-900">{MOCK_DEUDAS_HISTORIAL.length}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <svg className="w-4 h-4 inline text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                  <span className="text-xs text-gray-600 ml-1">En proceso</span>
+                </div>
+              </div>
+
+              {/* Acciones Totales */}
+              <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-l-4 border-blue-500 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Acciones (7d)</p>
+                    <p className="text-3xl font-bold text-gray-900">12</p>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <svg className="w-4 h-4 inline text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-xs text-gray-600 ml-1">Últimos 7 días</span>
+                </div>
+              </div>
+
+              {/* Monto Total */}
+              <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-l-4 border-green-500 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Monto en Gestión</p>
+                    <p className="text-3xl font-bold text-gray-900">$ 180K</p>
+                  </div>
+                  <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <span className="text-xs text-gray-600">2 deudas activas</span>
                 </div>
               </div>
             </div>
 
-            {/* Historial */}
+            {/* Mis Gestiones */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                <h3 className="text-lg font-bold text-gray-900">Mis Gestiones Anteriores</h3>
-                <p className="text-sm text-gray-600 mt-1">{MOCK_DEUDAS_HISTORIAL.length} gestiones en proceso</p>
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Mis Gestiones</h3>
+                    <p className="text-sm text-gray-600 mt-1">{MOCK_DEUDAS_HISTORIAL.length} gestiones en proceso</p>
+                  </div>
+                </div>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-gray-100 border-b border-gray-200">
                     <tr>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Deudor</th>
@@ -399,12 +614,13 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Estado</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
-                    {MOCK_DEUDAS_HISTORIAL.map((d) => (
+                  <tbody className="divide-y divide-gray-100">
+                    {MOCK_DEUDAS_HISTORIAL.map((d, index) => (
                       <DeudaRow
                         key={d.id}
                         deuda={d}
                         onClick={() => handleSeleccionarDeuda(d)}
+                        index={index}
                       />
                     ))}
                   </tbody>
@@ -425,63 +641,112 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
               <p className="text-gray-600">{deudaActual.id}</p>
             </div>
 
-            {/* Info Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    Deudor
-                  </label>
-                  <p className="text-xl font-semibold text-gray-900">{deudaActual.deudor}</p>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    Documento
-                  </label>
-                  <p className="text-xl font-semibold text-gray-900">{deudaActual.documento}</p>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    Fecha de Alta
-                  </label>
-                  <p className="text-lg text-gray-900">{formatDate(deudaActual.fechaAlta)}</p>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    Deuda Actual
-                  </label>
-                  <p className="text-3xl font-bold text-orange-600">
-                    {formatCurrency(deudaActual.deudaActual)}
-                  </p>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    Dirección
-                  </label>
-                  <p className="text-base text-gray-900">{deudaActual.direccion}</p>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    Teléfono
-                  </label>
-                  <p className="text-base text-gray-900">{deudaActual.telefono}</p>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    Email
-                  </label>
-                  <p className="text-base text-gray-900">{deudaActual.email}</p>
+            {/* Datos del Deudor */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 bg-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Datos del Deudor</h3>
+                    <p className="text-sm text-gray-600">Información personal</p>
+                  </div>
                 </div>
               </div>
+              <div className="p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      Nombre
+                    </label>
+                    <p className="text-base font-semibold text-gray-900">{deudaActual.deudor}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      Número Documento
+                    </label>
+                    <p className="text-base font-semibold text-gray-900">{deudaActual.numeroDocumento}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      CUIT
+                    </label>
+                    <p className="text-base font-semibold text-gray-900">{deudaActual.cuit}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      Fecha Nacimiento
+                    </label>
+                    <p className="text-base text-gray-900">{formatDate(deudaActual.fechaNacimiento)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-              <div className="flex gap-3 justify-end pt-6 border-t border-gray-200">
-                <Button variant="destructive" size="lg" onClick={handleRechazarDeuda}>
-                  Rechazar
-                </Button>
-                <Button variant="default" size="lg" onClick={handleAceptarDeuda}>
-                  Aceptar y Gestionar
-                </Button>
+            {/* Datos de la Deuda */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 bg-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Datos de la Deuda</h3>
+                    <p className="text-sm text-gray-600">{deudaActual.detalles.length} {deudaActual.detalles.length === 1 ? 'registro' : 'registros'}</p>
+                  </div>
+                </div>
               </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-100 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Fecha</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Importe Original</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Importe Actual</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Producto</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Descripción</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {deudaActual.detalles.map((detalle, index) => {
+                      console.log('Detalle:', detalle);
+                      return (
+                        <tr key={detalle.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(detalle.fecha)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatCurrency(detalle.importeOriginal)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-orange-600">{formatCurrency(detalle.importe)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{detalle.producto || '-'}</td>
+                          <td className="px-6 py-4 text-sm text-gray-900">{detalle.descripcion || '-'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot className="bg-gray-100 border-t-2 border-gray-300">
+                    <tr>
+                      <td className="px-6 py-4 text-sm font-bold text-gray-900" colSpan={2}>TOTAL</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-lg font-bold text-red-600">
+                        {formatCurrency(deudaActual.detalles.reduce((sum, d) => sum + d.importe, 0))}
+                      </td>
+                      <td colSpan={2}></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+
+            {/* Botones de Acción */}
+            <div className="flex gap-3 justify-end">
+              <Button variant="destructive" size="lg" onClick={handleRechazarDeuda}>
+                Rechazar
+              </Button>
+              <Button variant="default" size="lg" onClick={handleAceptarDeuda}>
+                Aceptar y Gestionar
+              </Button>
             </div>
           </div>
         )}
@@ -509,7 +774,7 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
                   <div>
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Deudor</p>
                     <p className="text-lg font-bold text-gray-900">{deudaActual.deudor}</p>
-                    <p className="text-xs text-gray-500">{deudaActual.documento}</p>
+                    <p className="text-xs text-gray-500">{deudaActual.numeroDocumento}</p>
                   </div>
                 </div>
               </div>
@@ -518,13 +783,13 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Contacto</p>
-                    <p className="text-sm font-medium text-gray-900">{deudaActual.telefono}</p>
-                    <p className="text-xs text-gray-500">{deudaActual.email}</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Productos</p>
+                    <p className="text-2xl font-bold text-gray-900">{deudaActual.detalles.length}</p>
+                    <p className="text-xs text-gray-500">{deudaActual.detalles.length === 1 ? 'producto' : 'productos'}</p>
                   </div>
                 </div>
               </div>
@@ -537,43 +802,98 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Deuda Actual</p>
-                    <p className="text-2xl font-bold text-red-600">{formatCurrency(deudaActual.deudaActual)}</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Deuda Total</p>
+                    <p className="text-2xl font-bold text-red-600">
+                      {formatCurrency(deudaActual.detalles.reduce((sum, d) => sum + d.importe, 0))}
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
 
+            {/* Historial de Acciones */}
+            {accionesHistorial.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">Historial de Acciones</h3>
+                      <p className="text-sm text-gray-600 mt-1">{accionesHistorial.length} acciones registradas</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-100 border-b border-gray-200">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Fecha</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Hora</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tipo</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Contacto</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Observaciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {accionesHistorial.map((a, index) => (
+                        <AccionRow
+                          key={a.id}
+                          accion={a}
+                          index={index}
+                          onClick={() => setAccionSeleccionada(a)}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             {/* Contactos */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                <h3 className="text-lg font-bold text-gray-900">Contactos del Deudor</h3>
-                <p className="text-sm text-gray-600 mt-1">Seleccione un contacto para registrar acciones</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Contactos del Deudor</h3>
+                    <p className="text-sm text-gray-600 mt-1">Seleccione un contacto para registrar acciones</p>
+                  </div>
+                </div>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-gray-100 border-b border-gray-200">
                     <tr>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-12"></th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tipo de Contacto</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Contacto</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Estado</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
-                    {MOCK_CONTACTOS.map((c) => (
+                  <tbody className="divide-y divide-gray-100">
+                    {MOCK_CONTACTOS.map((c, index) => (
                       <ContactoRow
                         key={c.id}
                         contacto={c}
                         isSelected={contactoSeleccionado?.id === c.id}
-                        onClick={() => setContactoSeleccionado(c)}
+                        onClick={() => setContactoSeleccionado(contactoSeleccionado?.id === c.id ? null : c)}
+                        index={index}
                       />
                     ))}
                   </tbody>
                 </table>
               </div>
               {contactoSeleccionado && (
-                <div className="px-6 py-3 bg-blue-50 border-t border-blue-200">
-                  <p className="text-sm font-medium text-blue-900">
+                <div className="px-6 py-3 bg-orange-50 border-t border-orange-200">
+                  <p className="text-sm font-medium text-orange-900">
                     <span className="font-bold">Seleccionado:</span> {contactoSeleccionado.tipo} - {contactoSeleccionado.valor}
                   </p>
                 </div>
@@ -582,8 +902,17 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
 
             {/* Registrar Acción */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-1">Registrar Nueva Acción</h3>
-              <p className="text-sm text-gray-600 mb-6">Complete los datos de la acción realizada</p>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Registrar Nueva Acción</h3>
+                  <p className="text-sm text-gray-600">Complete los datos de la acción realizada</p>
+                </div>
+              </div>
 
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -593,7 +922,7 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
                   value={observaciones}
                   onChange={(e) => setObservaciones(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                   placeholder="Describa la acción realizada..."
                 />
               </div>
@@ -605,39 +934,106 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
               </div>
             </div>
 
-            {/* Historial Acciones */}
-            {acciones.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                  <h3 className="text-lg font-bold text-gray-900">Historial de Acciones</h3>
-                  <p className="text-sm text-gray-600 mt-1">{acciones.length} acciones registradas</p>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Fecha</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Hora</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tipo</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Contacto</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Observaciones</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-100">
-                      {acciones.map((a) => (
-                        <AccionRow key={a.id} accion={a} />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
 
             {/* Finalizar */}
             <div className="flex justify-center pt-4">
               <Button size="lg" onClick={handleFinalizarGestion}>
                 ✓ Finalizar Gestión
               </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* MODAL CONFIRMACION SOLICITAR */}
+        {/* ============================================================ */}
+        {mostrarConfirmacionSolicitar && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-8">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">
+                    Solicitar Nueva Deuda
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Confirmar solicitud
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <p className="text-sm text-gray-700">
+                  ¿Está seguro que desea solicitar una nueva deuda para gestionar?
+                </p>
+                <p className="text-sm text-gray-600 mt-2">
+                  Se le asignará la próxima deuda disponible en el sistema.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setMostrarConfirmacionSolicitar(false)}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button variant="default" onClick={handleConfirmarSolicitud} className="flex-1">
+                  Confirmar Solicitud
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* MODAL CONFIRMACION FINALIZAR */}
+        {/* ============================================================ */}
+        {mostrarConfirmacionFinalizar && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-8">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">
+                    Finalizar Gestión
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    {deudaActual?.id}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <p className="text-sm text-gray-700">
+                  ¿Está seguro que desea finalizar la gestión de esta deuda?
+                </p>
+                <p className="text-sm text-gray-600 mt-2">
+                  Se han registrado <span className="font-bold">{accionesHistorial.length} acciones</span> en total.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setMostrarConfirmacionFinalizar(false)}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button variant="default" onClick={handleConfirmarFinalizar} className="flex-1">
+                  Confirmar Finalización
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -669,14 +1065,16 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Motivo de Rechazo *
                   </label>
-                  <BizuitCombo
-                    options={MOTIVOS_RECHAZO}
+                  <select
                     value={motivoRechazo}
-                    onChange={(v) => setMotivoRechazo(v as string)}
-                    placeholder="Seleccione un motivo..."
-                    searchable={false}
-                    clearable={false}
-                  />
+                    onChange={(e) => setMotivoRechazo(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-0 focus:border-gray-300 transition-colors"
+                  >
+                    <option value="">Seleccione un motivo...</option>
+                    {MOTIVOS_RECHAZO.map(m => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -686,7 +1084,7 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
                     value={descripcionRechazo}
                     onChange={(e) => setDescripcionRechazo(e.target.value)}
                     rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                     placeholder="Ingrese una descripción detallada del rechazo..."
                   />
                 </div>
@@ -706,6 +1104,82 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
                 </Button>
                 <Button variant="destructive" onClick={handleConfirmarRechazo} className="flex-1">
                   Confirmar Rechazo
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* MODAL DETALLE DE ACCION */}
+        {/* ============================================================ */}
+        {accionSeleccionada && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-8">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">
+                    Detalle de Acción
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    {accionSeleccionada.tipo} - {accionSeleccionada.fecha} {accionSeleccionada.hora}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setAccionSeleccionada(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Información de la acción */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      Fecha y Hora
+                    </label>
+                    <p className="text-base text-gray-900">{accionSeleccionada.fecha} - {accionSeleccionada.hora}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      Tipo de Acción
+                    </label>
+                    <p className="text-base font-medium text-gray-900">{accionSeleccionada.tipo}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    Contacto Utilizado
+                  </label>
+                  <p className="text-base text-gray-900">{accionSeleccionada.contacto}</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    Observaciones
+                  </label>
+                  <textarea
+                    value={accionSeleccionada.observaciones}
+                    readOnly
+                    rows={6}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:outline-none resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-6 mt-6 border-t border-gray-200">
+                <Button variant="outline" onClick={() => setAccionSeleccionada(null)}>
+                  Cerrar
                 </Button>
               </div>
             </div>
