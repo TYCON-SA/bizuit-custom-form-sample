@@ -1,7 +1,10 @@
 /**
  * Recubiz - Sistema de Gestión de Cobranzas
  * Professional debt collection management system
+ * BUILD: v200
  */
+
+console.log('🔥 RECUBIZ FORM LOADED - BUILD v200');
 
 import { useState, useEffect } from 'react';
 import { version as FORM_VERSION } from '../package.json';
@@ -351,6 +354,29 @@ function DetalleDeudaRow({ detalle, index }: { detalle: DetalleDeuda; index: num
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{detalle.producto || '-'}</td>
       <td className="px-6 py-4 text-sm text-gray-900">{detalle.descripcion || '-'}</td>
     </tr>
+  );
+}
+
+function ContactoCard({ contacto, onClick }: { contacto: Contacto; onClick: () => void }) {
+  return (
+    <div
+      onClick={onClick}
+      className="bg-gray-50 rounded-xl shadow-sm hover:shadow-xl hover:bg-orange-50 hover:border-l-8 transition-all border-l-4 border-orange-500 p-4 cursor-pointer"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
+          {getContactIcon(contacto.tipoContacto || contacto.tipo)}
+        </div>
+        <div>
+          <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+            {contacto.tipoContacto || contacto.tipo || 'Contacto'}
+          </p>
+          <p className="text-base font-bold text-gray-900">
+            {contacto.contacto || contacto.valor || 'Sin información'}
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1317,28 +1343,14 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {deudaActual.contactos && deudaActual.contactos.length > 0 ? (
                   deudaActual.contactos.map((contacto) => (
-                    <div
+                    <ContactoCard
                       key={contacto.id}
+                      contacto={contacto}
                       onClick={() => {
                         setContactoSeleccionado(contacto);
                         setMostrarModalRegistrarAccion(true);
                       }}
-                      className="bg-gray-50 rounded-xl shadow-sm hover:shadow-xl hover:bg-orange-50 hover:border-l-8 transition-all border-l-4 border-orange-500 p-4 cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
-                          {getContactIcon(contacto.tipoContacto || contacto.tipo)}
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                            {contacto.tipoContacto || contacto.tipo || 'Contacto'}
-                          </p>
-                          <p className="text-base font-bold text-gray-900">
-                            {contacto.contacto || contacto.valor || 'Sin información'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                    />
                   ))
                 ) : (
                   <div className="col-span-full text-center py-8 text-gray-500">

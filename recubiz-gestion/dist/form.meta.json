@@ -1,8 +1,8 @@
 {
   "formName": "recubiz-gestion",
   "version": "1.0.0",
-  "builtAt": "2025-11-23T05:40:08.651Z",
-  "sizeBytes": 174038,
+  "builtAt": "2025-11-23T06:13:38.357Z",
+  "sizeBytes": 174179,
   "entryPoint": "./src/index.tsx",
   "externals": [
     "react",
