@@ -832,9 +832,12 @@ jobs:
           echo "Go to **Actions** → **Artifacts** to download individual form deployment packages" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📤 Upload Instructions" >> $GITHUB_STEP_SUMMARY
-          echo "1. Download the form-specific ZIP from artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "2. Transfer to offline server" >> $GITHUB_STEP_SUMMARY
-          echo "3. Upload via: \`/admin/upload-forms\`" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download the artifact from GitHub Actions (will be a ZIP file)" >> $GITHUB_STEP_SUMMARY
+          echo "2. Extract the ZIP - you'll find the deployment package inside" >> $GITHUB_STEP_SUMMARY
+          echo "3. Transfer the inner ZIP to offline server" >> $GITHUB_STEP_SUMMARY
+          echo "4. Upload via: \`/admin/upload-forms\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Alternative:** Use ZIPs from \`{form-name}/upload/\` directory in the repository (already committed)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### ℹ️ Versioning System" >> $GITHUB_STEP_SUMMARY
           echo "- Each form has **independent versioning**" >> $GITHUB_STEP_SUMMARY
@@ -857,7 +860,7 @@ jobs:
         with:
           name: build-zips-temp
 
-      - name: Get artifact name
+      - name: Extract ZIP contents for artifact
         id: artifact_info
         run: |
           # Get the ZIP file for this form from the downloaded artifacts
@@ -865,10 +868,19 @@ jobs:
             ZIP_FILE=$(ls -t ${{ matrix.form }}/upload/*.zip 2>/dev/null | head -1)
             if [ -n "$ZIP_FILE" ]; then
               ZIP_BASENAME=$(basename "$ZIP_FILE" .zip)
+
+              # Extract ZIP contents to avoid double-zipping by GitHub Actions
+              EXTRACT_DIR="artifact-${ZIP_BASENAME}"
+              mkdir -p "$EXTRACT_DIR"
+              unzip -q "$ZIP_FILE" -d "$EXTRACT_DIR"
+
               echo "artifact_name=$ZIP_BASENAME" >> $GITHUB_OUTPUT
-              echo "zip_path=$ZIP_FILE" >> $GITHUB_OUTPUT
-              echo "✅ Found artifact: $ZIP_BASENAME"
-              echo "   Path: $ZIP_FILE"
+              echo "artifact_path=$EXTRACT_DIR" >> $GITHUB_OUTPUT
+
+              echo "✅ Found and extracted: $ZIP_BASENAME"
+              echo "   Extracted to: $EXTRACT_DIR"
+              echo "   Contents:"
+              ls -lh "$EXTRACT_DIR"
             else
               echo "❌ No ZIP found for ${{ matrix.form }}"
               exit 1
@@ -878,11 +890,11 @@ jobs:
             exit 1
           fi
 
-      - name: Upload artifact
+      - name: Upload artifact (extracted contents)
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.artifact_info.outputs.artifact_name }}
-          path: ${{ steps.artifact_info.outputs.zip_path }}
+          path: ${{ steps.artifact_info.outputs.artifact_path }}
           retention-days: 90
 
   # Cleanup job: Delete temporary artifact after all uploads complete
