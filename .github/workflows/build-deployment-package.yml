@@ -958,3 +958,17 @@ jobs:
           name: ${{ steps.artifact_info.outputs.artifact_name }}
           path: ${{ steps.artifact_info.outputs.zip_path }}
           retention-days: 90
+
+  # Cleanup job: Delete temporary artifact after all uploads complete
+  cleanup-temp-artifact:
+    name: Cleanup temporary artifact
+    needs: upload-artifacts
+    if: always() && needs.build-deployment-package.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Delete build-zips-temp artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: build-zips-temp
+          failOnError: false
