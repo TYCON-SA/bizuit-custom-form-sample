@@ -53,7 +53,7 @@ var require_react_dom = __commonJS({
 var import_react8 = __toESM(require_react());
 
 // package.json
-var version = "1.0.13";
+var version = "1.0.15";
 
 // node_modules/clsx/dist/clsx.mjs
 function r(e) {
@@ -9199,7 +9199,6 @@ var BizuitSDKContext = (0, import_react6.createContext)(null);
 // src/index.tsx
 var import_jsx_runtime36 = __toESM(require_jsx_runtime());
 var SDK_CONFIG = {
-  defaultApiUrl: "https://test.bizuit.com/recubizBizuitDashboardapi/api/",
   processName: "RB_ObtenerProximaGestion"
 };
 async function obtenerIdGestorPorUsuario(sdk, userName, token) {
@@ -9406,7 +9405,12 @@ function RecubizGestionFormInner({ dashboardParams }) {
   const [accionSeleccionada, setAccionSeleccionada] = (0, import_react8.useState)(null);
   const [mostrarHistorial, setMostrarHistorial] = (0, import_react8.useState)(false);
   const [mostrarModalRegistrarAccion, setMostrarModalRegistrarAccion] = (0, import_react8.useState)(false);
-  const apiUrl = dashboardParams?.apiUrl || dashboardParams?.devApiUrl || SDK_CONFIG.defaultApiUrl;
+  const apiUrl = dashboardParams?.apiUrl || dashboardParams?.devApiUrl;
+  if (!apiUrl) {
+    throw new Error(
+      "API URL not provided. Production: FormLoader must pass apiUrl in dashboardParams. Dev: Provide devApiUrl in dev-credentials.js"
+    );
+  }
   const sdk = (0, import_react8.useMemo)(() => new BizuitSDK({ apiUrl }), [apiUrl]);
   console.log(`\u{1F517} Using API URL: ${apiUrl}`);
   const [authToken, setAuthToken] = (0, import_react8.useState)("");
@@ -9425,7 +9429,9 @@ function RecubizGestionFormInner({ dashboardParams }) {
           token = dashboardParams.token;
           setAuthToken(token);
         } else if (dashboardParams?.devUsername && dashboardParams?.devPassword) {
-          console.warn("\u26A0\uFE0F Dev mode: Using credentials from dashboardParams");
+          console.warn("\u26A0\uFE0F Dev mode: Using credentials from dashboardParams (FormLoader)");
+          console.log("   devUsername:", dashboardParams.devUsername);
+          console.log("   apiUrl from dashboardParams:", dashboardParams.apiUrl || dashboardParams.devApiUrl || "NOT SET");
           const loginResult = await sdk.auth.login({
             username: dashboardParams.devUsername,
             password: dashboardParams.devPassword
