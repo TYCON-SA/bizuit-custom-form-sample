@@ -708,7 +708,7 @@ jobs:
         if: steps.changed_forms.outputs.no_changes != 'true'
         run: |
           echo "📦 Staging new ZIPs for artifact upload..."
-          mkdir -p .artifact-staging
+          mkdir -p artifact-staging
 
           CHANGED_FORMS="${{ steps.changed_forms.outputs.changed_forms }}"
 
@@ -718,8 +718,8 @@ jobs:
               ZIP_FILE=$(ls -t "$form_name/upload/"*.zip 2>/dev/null | head -1)
               if [ -n "$ZIP_FILE" ]; then
                 # Preserve directory structure: form-name/upload/file.zip
-                mkdir -p ".artifact-staging/$form_name/upload"
-                cp "$ZIP_FILE" ".artifact-staging/$form_name/upload/"
+                mkdir -p "artifact-staging/$form_name/upload"
+                cp "$ZIP_FILE" "artifact-staging/$form_name/upload/"
                 echo "  ✅ Staged: $(basename $ZIP_FILE)"
               fi
             fi
@@ -727,7 +727,7 @@ jobs:
 
           echo ""
           echo "📋 Staged files:"
-          find .artifact-staging -name "*.zip" -ls
+          find artifact-staging -name "*.zip" -ls
 
       # Upload only the NEW ZIPs as a temporary artifact for the second job
       - name: Upload ZIPs for artifact job
@@ -735,7 +735,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-zips-temp
-          path: .artifact-staging/*/upload/*.zip
+          path: artifact-staging/*/upload/*.zip
           retention-days: 1  # Temporary, just for passing to next job
 
       - name: Commit and push deployment ZIPs and updated package.json files
