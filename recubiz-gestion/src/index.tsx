@@ -543,22 +543,14 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
       setIsLoading(true);
       setLoadingMessage('Solicitando nueva deuda...');
 
-      // Call the RB_ObtenerProximaGestion process
-      const result = await sdk.process.start(
-        {
-          processName: SDK_CONFIG.processName,
-          parameters: [
-            {
-              name: 'idGestor',
-              value: String(SDK_CONFIG.idGestor),
-              type: 'SingleValue',
-              direction: 'In'
-            }
-          ]
-        },
-        [],
-        authToken
-      );
+      // Call the RB_ObtenerProximaGestion process using FormService
+      const result = await sdk.forms.startProcess({
+        processName: SDK_CONFIG.processName,
+        additionalParameters: sdk.forms.createParameters([
+          { name: 'idGestor', value: String(SDK_CONFIG.idGestor) }
+        ]),
+        token: authToken
+      });
 
       // Log raw response for debugging
       console.log('🔍 SDK Response (raw):', JSON.stringify(result, null, 2));
@@ -708,34 +700,16 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
       setIsLoading(true);
       setLoadingMessage('Iniciando gestión...');
 
-      // Call RB_IniciarGestion process
-      const result = await sdk.process.start(
-        {
-          processName: 'RB_IniciarGestion',
-          parameters: [
-            {
-              name: 'idGestor',
-              value: String(SDK_CONFIG.idGestor),
-              type: 'SingleValue',
-              direction: 'In'
-            },
-            {
-              name: 'idDeudor',
-              value: String(deudaActual.idDeudor),
-              type: 'SingleValue',
-              direction: 'In'
-            },
-            {
-              name: 'idDeuda',
-              value: String(deudaActual.idDeuda),
-              type: 'SingleValue',
-              direction: 'In'
-            }
-          ]
-        },
-        [],
-        authToken
-      );
+      // Call RB_IniciarGestion process using FormService
+      const result = await sdk.forms.startProcess({
+        processName: 'RB_IniciarGestion',
+        additionalParameters: sdk.forms.createParameters([
+          { name: 'idGestor', value: String(SDK_CONFIG.idGestor) },
+          { name: 'idDeudor', value: String(deudaActual.idDeudor) },
+          { name: 'idDeuda', value: String(deudaActual.idDeuda) }
+        ]),
+        token: authToken
+      });
 
       console.log('🔍 RB_IniciarGestion response:', result);
 
