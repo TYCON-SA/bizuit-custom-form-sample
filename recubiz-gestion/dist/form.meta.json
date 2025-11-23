@@ -1,11 +1,13 @@
 {
   "formName": "recubiz-gestion",
-  "version": "1.0.0",
-  "builtAt": "2025-11-23T06:13:38.357Z",
-  "sizeBytes": 174179,
+  "version": "1.0.8",
+  "builtAt": "2025-11-23T14:35:21.487Z",
+  "sizeBytes": 52231,
   "entryPoint": "./src/index.tsx",
   "externals": [
     "react",
-    "react-dom"
+    "react-dom",
+    "@tyconsa/bizuit-form-sdk",
+    "@tyconsa/bizuit-ui-components"
   ]
 }

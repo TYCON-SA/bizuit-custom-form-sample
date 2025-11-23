@@ -30,35 +30,48 @@ async function buildForm() {
       fs.mkdirSync(distDir, { recursive: true });
     }
 
-    // Plugin to replace React imports with global references
-    const globalReactPlugin = {
-      name: 'global-react',
+    // Plugin to replace React and Bizuit packages with global references
+    const globalExternalsPlugin = {
+      name: 'global-externals',
       setup(build) {
-        // Intercept react imports
+        // Intercept React imports
         build.onResolve({ filter: /^react$/ }, args => {
-          return { path: args.path, namespace: 'global-react' }
+          return { path: args.path, namespace: 'global-externals' }
         })
 
         build.onResolve({ filter: /^react-dom$/ }, args => {
-          return { path: args.path, namespace: 'global-react' }
+          return { path: args.path, namespace: 'global-externals' }
         })
 
         build.onResolve({ filter: /^react\/jsx-runtime$/ }, args => {
-          return { path: args.path, namespace: 'global-react' }
+          return { path: args.path, namespace: 'global-externals' }
         })
 
         build.onResolve({ filter: /^react\/jsx-dev-runtime$/ }, args => {
-          return { path: args.path, namespace: 'global-react' }
+          return { path: args.path, namespace: 'global-externals' }
         })
 
-        // Return empty module for these imports
-        build.onLoad({ filter: /.*/, namespace: 'global-react' }, args => {
+        // Intercept Bizuit packages imports
+        build.onResolve({ filter: /^@tyconsa\/bizuit-form-sdk$/ }, args => {
+          return { path: args.path, namespace: 'global-externals' }
+        })
+
+        build.onResolve({ filter: /^@tyconsa\/bizuit-ui-components$/ }, args => {
+          return { path: args.path, namespace: 'global-externals' }
+        })
+
+        // Return global references for these imports
+        build.onLoad({ filter: /.*/, namespace: 'global-externals' }, args => {
           const contents = args.path === 'react'
             ? 'module.exports = window.React'
             : args.path === 'react-dom'
             ? 'module.exports = window.ReactDOM'
             : args.path.includes('jsx-runtime')
             ? 'module.exports = { jsx: window.React.createElement, jsxs: window.React.createElement, Fragment: window.React.Fragment }'
+            : args.path === '@tyconsa/bizuit-form-sdk'
+            ? 'module.exports = window.BizuitFormSDK'
+            : args.path === '@tyconsa/bizuit-ui-components'
+            ? 'module.exports = window.BizuitUIComponents'
             : ''
 
           return {
@@ -79,14 +92,8 @@ async function buildForm() {
       minify: true,
       sourcemap: true,
 
-      // Mark external dependencies (loaded by runtime app)
-      external: [
-        '@tyconsa/bizuit-form-sdk',
-        '@tyconsa/bizuit-ui-components',
-      ],
-
-      // Use plugin to inject global React references
-      plugins: [globalReactPlugin],
+      // Use plugin to inject global references for React and Bizuit packages
+      plugins: [globalExternalsPlugin],
 
       // Replace React imports with global references
       banner: {
