@@ -7,6 +7,7 @@
  * - Ripple effects en botones
  * - Tipografía Roboto
  * - FAB (Floating Action Button)
+ * @version 2.0
  */
 
 import { useState } from 'react';
