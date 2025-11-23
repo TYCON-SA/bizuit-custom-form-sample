@@ -1,7 +1,6 @@
 /**
  * Recubiz - Sistema de Gestión de Cobranzas
  * Professional debt collection management system
- * @version 1.0.18
  */
 
 import { useState, useEffect, useMemo } from 'react';
@@ -20,6 +19,7 @@ import { BizuitSDK } from '@tyconsa/bizuit-form-sdk';
 // ============================================================================
 
 const SDK_CONFIG = {
+  defaultApiUrl: 'https://test.bizuit.com/recubizBizuitDashboardapi/api/',
   processName: 'RB_ObtenerProximaGestion'
 };
 
@@ -143,6 +143,147 @@ interface Accion {
   contacto: string;
   observaciones: string;
 }
+
+// ============================================================================
+// MOCK DATA
+// ============================================================================
+
+const MOCK_DEUDAS_NUEVAS: Deuda[] = [
+  {
+    id: 'D-2024-001',
+    deudor: 'CABRERA OMAR',
+    numeroDocumento: '28190044',
+    cuit: '20281900448',
+    fechaNacimiento: '1981-03-18',
+    fechaAlta: '2024-01-15',
+    estado: 'nueva',
+    detalles: [
+      {
+        id: 1,
+        fecha: '2018-06-01',
+        importeOriginal: 40000.00,
+        importe: 179600.00,
+        producto: '1040754305',
+        descripcion: 'A3 F011143DEPPHILIPS HP-6574 SAINT PERF744739NOKIA 100 MOVISTAR PRE'
+      },
+      {
+        id: 2,
+        fecha: '2019-03-15',
+        importeOriginal: 25000.00,
+        importe: 89400.00,
+        producto: '1040754306',
+        descripcion: 'Samsung Galaxy S10 - Tablet iPad Mini'
+      }
+    ],
+    contactos: []
+  }
+];
+
+const MOCK_DEUDAS_HISTORIAL: Deuda[] = [
+  {
+    id: 'D-2023-089',
+    deudor: 'María González',
+    numeroDocumento: '27-45678902-3',
+    cuit: '27456789023',
+    fechaNacimiento: '1985-07-20',
+    fechaAlta: '2023-12-10',
+    estado: 'gestionando',
+    detalles: [
+      {
+        id: 1,
+        fecha: '2023-10-15',
+        importeOriginal: 50000.00,
+        importe: 55000.00,
+        producto: '1040754306',
+        descripcion: 'Notebook Samsung Galaxy Book'
+      },
+      {
+        id: 2,
+        fecha: '2023-11-20',
+        importeOriginal: 30000.00,
+        importe: 30000.00,
+        producto: '1040754307',
+        descripcion: 'Mouse Logitech MX Master 3'
+      }
+    ],
+    contactos: []
+  },
+  {
+    id: 'D-2023-045',
+    deudor: 'Pedro Martínez',
+    numeroDocumento: '23-12345678-9',
+    cuit: '23123456789',
+    fechaNacimiento: '1978-05-10',
+    fechaAlta: '2023-08-20',
+    estado: 'gestionando',
+    detalles: [
+      {
+        id: 1,
+        fecha: '2023-07-05',
+        importeOriginal: 95000.00,
+        importe: 95000.00,
+        producto: '1040754308',
+        descripcion: 'Smart TV 55" Samsung QLED'
+      }
+    ],
+    contactos: []
+  }
+];
+
+// Acciones previas (readonly - ya registradas en gestiones anteriores)
+const MOCK_ACCIONES_PREVIAS: Accion[] = [
+  {
+    id: 'A001',
+    fecha: '15/01/2024',
+    hora: '10:30',
+    tipo: 'Gestión',
+    contacto: 'Teléfono Móvil: 351 663 9967',
+    observaciones: 'Primera llamada telefónica. No contesta. Se deja mensaje.'
+  },
+  {
+    id: 'A002',
+    fecha: '16/01/2024',
+    hora: '14:15',
+    tipo: 'Gestión',
+    contacto: 'Email Personal: deudor@email.com',
+    observaciones: 'Envío de email con detalle de deuda y opciones de pago.'
+  },
+  {
+    id: 'A003',
+    fecha: '18/01/2024',
+    hora: '11:00',
+    tipo: 'Gestión',
+    contacto: 'Teléfono Móvil: 351 663 9967',
+    observaciones: 'Contacto telefónico exitoso. Promete pago parcial en 48hs.'
+  },
+  {
+    id: 'A004',
+    fecha: '20/01/2024',
+    hora: '09:45',
+    tipo: 'Gestión',
+    contacto: 'WhatsApp: 351 663 9967',
+    observaciones: 'Se realizó contacto vía WhatsApp con el deudor. Manifestó estar atravesando una situación económica complicada debido a la pérdida de su empleo hace 3 meses. Expresó su voluntad de regularizar la deuda pero indicó que necesita un plazo mayor. Se le ofreció un plan de pagos en 12 cuotas con una quita del 15% sobre los intereses acumulados. El deudor solicitó 48 horas para evaluar la propuesta y consultar con su familia. Se acordó retomar el contacto el día 22/01/2024 a las 14:00 hs para confirmar su decisión. Mostró buena predisposición y agradeció la flexibilidad ofrecida.'
+  }
+];
+
+const TIPOS_ACCION: ComboOption[] = [
+  { label: 'Llamada Telefónica', value: 'llamada' },
+  { label: 'Mensaje WhatsApp', value: 'whatsapp' },
+  { label: 'Envío de Email', value: 'email' },
+  { label: 'Mensaje SMS', value: 'sms' },
+  { label: 'Visita Presencial', value: 'visita' },
+  { label: 'Carta Documento', value: 'carta' }
+];
+
+const MOTIVOS_RECHAZO: ComboOption[] = [
+  { label: 'Deuda inexistente', value: 'inexistente' },
+  { label: 'Deuda ya cancelada', value: 'cancelada' },
+  { label: 'Monto incorrecto', value: 'monto_incorrecto' },
+  { label: 'Datos del deudor incorrectos', value: 'datos_incorrectos' },
+  { label: 'Fuera de jurisdicción', value: 'jurisdiccion' },
+  { label: 'Otro motivo', value: 'otro' }
+];
+
 // ============================================================================
 // HELPER COMPONENTS
 // ============================================================================
@@ -364,17 +505,10 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
   const [mostrarModalRegistrarAccion, setMostrarModalRegistrarAccion] = useState(false);
 
   // Initialize SDK with apiUrl
-  // MUST come from FormLoader (dashboardParams.apiUrl) or dev credentials (devApiUrl)
-  // NO hardcoded fallback - fails explicitly if not provided
-  const apiUrl = dashboardParams?.apiUrl || dashboardParams?.devApiUrl;
-
-  if (!apiUrl) {
-    throw new Error(
-      'API URL not provided. ' +
-      'Production: FormLoader must pass apiUrl in dashboardParams. ' +
-      'Dev: Provide devApiUrl in dev-credentials.js'
-    );
-  }
+  // Priority: 1) apiUrl (from FormLoader), 2) devApiUrl (dev override), 3) default
+  const apiUrl = dashboardParams?.apiUrl
+    || dashboardParams?.devApiUrl
+    || SDK_CONFIG.defaultApiUrl;
 
   const sdk = useMemo(() => new BizuitSDK({ apiUrl }), [apiUrl]);
 

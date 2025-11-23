@@ -53,7 +53,7 @@ var require_react_dom = __commonJS({
 var import_react8 = __toESM(require_react());
 
 // package.json
-var version = "1.0.15";
+var version = "1.0.18";
 
 // node_modules/clsx/dist/clsx.mjs
 function r(e) {
@@ -9199,6 +9199,7 @@ var BizuitSDKContext = (0, import_react6.createContext)(null);
 // src/index.tsx
 var import_jsx_runtime36 = __toESM(require_jsx_runtime());
 var SDK_CONFIG = {
+  defaultApiUrl: "https://test.bizuit.com/recubizBizuitDashboardapi/api/",
   processName: "RB_ObtenerProximaGestion"
 };
 async function obtenerIdGestorPorUsuario(sdk, userName, token) {
@@ -9405,12 +9406,7 @@ function RecubizGestionFormInner({ dashboardParams }) {
   const [accionSeleccionada, setAccionSeleccionada] = (0, import_react8.useState)(null);
   const [mostrarHistorial, setMostrarHistorial] = (0, import_react8.useState)(false);
   const [mostrarModalRegistrarAccion, setMostrarModalRegistrarAccion] = (0, import_react8.useState)(false);
-  const apiUrl = dashboardParams?.apiUrl || dashboardParams?.devApiUrl;
-  if (!apiUrl) {
-    throw new Error(
-      "API URL not provided. Production: FormLoader must pass apiUrl in dashboardParams. Dev: Provide devApiUrl in dev-credentials.js"
-    );
-  }
+  const apiUrl = dashboardParams?.apiUrl || dashboardParams?.devApiUrl || SDK_CONFIG.defaultApiUrl;
   const sdk = (0, import_react8.useMemo)(() => new BizuitSDK({ apiUrl }), [apiUrl]);
   console.log(`\u{1F517} Using API URL: ${apiUrl}`);
   const [authToken, setAuthToken] = (0, import_react8.useState)("");
