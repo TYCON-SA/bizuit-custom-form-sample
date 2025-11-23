@@ -425,8 +425,58 @@ stages:
                     # Crear estructura temporal para este form
                     mkdir -p "temp-package-$form_name"
 
-                    # Copiar manifest.json
-                    cp deployment-package/manifest.json "temp-package-$form_name/"
+                    # Crear manifest.json INDIVIDUAL para este form específico
+                    PACKAGE_VERSION="1.0.$(date +%Y%m%d%H%M)"
+                    BUILD_DATE="$(GetBuildMetadata.buildDate)"
+                    COMMIT_HASH="$(GetBuildMetadata.commitHash)"
+                    SHORT_HASH_VAR="$SHORT_HASH"
+
+                    # Obtener información del form
+                    description=$(jq -r '.description // "Custom form"' "$form_name/package.json")
+                    author=$(jq -r '.author // "Bizuit Team"' "$form_name/package.json")
+                    process_name=$(echo "$form_name" | sed -r 's/(^|-)([a-z])/\U\2/g')
+                    size=$(wc -c < "$form_name/dist/form.js")
+
+                    # Leer release notes
+                    RELEASE_NOTES=$(cat /tmp/release_notes.txt 2>/dev/null || echo "Deployment package")
+                    release_notes_json=$(echo "$RELEASE_NOTES" | jq -Rs .)
+
+                    # Crear manifest individual con SOLO este form usando jq
+                    jq -n \
+                      --arg packageVersion "$PACKAGE_VERSION" \
+                      --arg buildDate "$BUILD_DATE" \
+                      --arg commitHash "$COMMIT_HASH" \
+                      --arg commitShortHash "$SHORT_HASH_VAR" \
+                      --arg repositoryUrl "$(Build.Repository.Uri)" \
+                      --arg formName "$form_name" \
+                      --arg processName "$process_name" \
+                      --arg version "$FORM_VERSION" \
+                      --arg gitTag "${form_name}-v${FORM_VERSION}" \
+                      --arg description "$description" \
+                      --arg author "$author" \
+                      --argjson releaseNotes "$release_notes_json" \
+                      --arg sizeBytes "$size" \
+                      --arg path "forms/$form_name/form.js" \
+                      '{
+                        packageVersion: $packageVersion,
+                        buildDate: $buildDate,
+                        commitHash: $commitHash,
+                        commitShortHash: $commitShortHash,
+                        repositoryUrl: $repositoryUrl,
+                        forms: [
+                          {
+                            formName: $formName,
+                            processName: $processName,
+                            version: $version,
+                            gitTag: $gitTag,
+                            description: $description,
+                            author: $author,
+                            releaseNotes: $releaseNotes,
+                            sizeBytes: ($sizeBytes | tonumber),
+                            path: $path
+                          }
+                        ]
+                      }' > "temp-package-$form_name/manifest.json"
 
                     # Copiar solo este form
                     mkdir -p "temp-package-$form_name/forms/$form_name"
@@ -458,14 +508,14 @@ stages:
                 echo "📋 Forms list:"
                 cat artifact-staging/forms-list.txt || echo "  No forms"
 
-          # Azure DevOps Limitation: No se pueden crear artifacts dinámicamente
-          # Solución: Publicamos cada ZIP como un artifact separado usando PowerShell
+          # Extraer contenido de ZIPs antes de publicar artifacts
+          # Esto evita el double-zipping y permite usar directamente el artefacto
           - task: PowerShell@2
-            displayName: 'Publish individual form artifacts (dynamic)'
+            displayName: 'Extract and publish individual form artifacts'
             inputs:
               targetType: 'inline'
               script: |
-                Write-Host "📤 Publishing individual artifacts for each form..."
+                Write-Host "📤 Extracting and publishing individual artifacts for each form..."
 
                 if (Test-Path "artifact-staging/forms-list.txt") {
                   Get-Content "artifact-staging/forms-list.txt" | ForEach-Object {
@@ -477,21 +527,25 @@ stages:
                     $zipFile = "artifact-staging/${zipName}.zip"
 
                     Write-Host ""
-                    Write-Host "📦 Publishing: $formName"
+                    Write-Host "📦 Processing: $formName"
                     Write-Host "   Artifact: $zipName"
                     Write-Host "   Version: $version"
 
-                    # Copiar a un directorio único para este artifact
-                    $artifactDir = "$(Build.ArtifactStagingDirectory)/$zipName"
-                    New-Item -ItemType Directory -Force -Path $artifactDir | Out-Null
-                    Copy-Item $zipFile $artifactDir
+                    # Extraer ZIP para evitar double-zipping
+                    $extractDir = "$(Build.ArtifactStagingDirectory)/$zipName"
+                    New-Item -ItemType Directory -Force -Path $extractDir | Out-Null
 
-                    Write-Host "   ✅ Staged at: $artifactDir"
+                    Write-Host "   🔓 Extracting ZIP contents..."
+                    Expand-Archive -Path $zipFile -DestinationPath $extractDir -Force
+
+                    Write-Host "   ✅ Extracted to: $extractDir"
+                    Write-Host "   📁 Contents:"
+                    Get-ChildItem $extractDir -Recurse | ForEach-Object { Write-Host "      - $($_.FullName.Replace($extractDir, ''))" }
                   }
 
                   Write-Host ""
                   Write-Host "📊 Artifacts ready:"
-                  Get-ChildItem "$(Build.ArtifactStagingDirectory)" -Recurse -Filter "*.zip"
+                  Get-ChildItem "$(Build.ArtifactStagingDirectory)" -Directory
                 }
 
           # Publicar artifacts - Azure DevOps creará un artifact por cada subdirectorio
@@ -541,7 +595,16 @@ stages:
                              -m "" \
                              -m "🤖 Automated commit by Azure DevOps"
 
+                  # Pull con rebase antes de push para evitar race conditions
+                  echo "🔄 Pulling latest changes with rebase..."
+                  git pull --rebase origin main || {
+                    echo "⚠️  Rebase failed, aborting and retrying with merge strategy..."
+                    git rebase --abort 2>/dev/null || true
+                    git pull --no-rebase origin main
+                  }
+
                   # Push del commit
+                  echo "📤 Pushing changes to repository..."
                   git push origin HEAD:main
 
                   echo "✅ Updated package.json files committed and pushed"
@@ -613,9 +676,10 @@ stages:
                 echo "Los paquetes individuales están disponibles en los artefactos del build"
                 echo ""
                 echo "### 📤 Upload Instructions"
-                echo "1. Descarga el ZIP específico del form desde los artefactos"
-                echo "2. Transfiere al servidor offline"
-                echo "3. Sube vía: /admin/upload-forms"
+                echo "1. Descarga el artefacto desde Azure DevOps (será un ZIP)"
+                echo "2. El ZIP descargado contiene manifest.json, forms/ y form.js"
+                echo "3. Transfiere el ZIP al servidor offline"
+                echo "4. Sube directamente vía: /admin/upload-forms"
                 echo ""
                 echo "### ℹ️ Versioning System"
                 echo "- Each form has **independent versioning**"
