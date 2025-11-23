@@ -1,0 +1,22 @@
+{
+  "name": "@tyconsa/bizuit-form-template",
+  "version": "1.0.0",
+  "description": "BIZUIT Custom Form Template - Base template for creating new forms with best practices",
+  "author": "Tycon S.A.",
+  "license": "ISC",
+  "type": "module",
+  "scripts": {
+    "build": "node ../build-form.js ./src/index.tsx ./dist/form.js form-template"
+  },
+  "dependencies": {
+    "@tyconsa/bizuit-form-sdk": "^2.0.0",
+    "@tyconsa/bizuit-ui-components": "^1.7.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "typescript": "^5.7.2"
+  }
+}

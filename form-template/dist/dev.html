@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form Template - Development</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    #root {
+      min-height: 100vh;
+    }
+    .dev-banner {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 12px 20px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <!-- Development Mode Banner -->
+  <div class="dev-banner">
+    🚀 DEVELOPMENT MODE - Form Template v1.0.0
+  </div>
+
+  <!-- React App Root -->
+  <div id="root"></div>
+
+  <!-- React Dependencies (CDN) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- Bizuit SDK and UI Components (CDN) -->
+  <script src="https://unpkg.com/@tyconsa/bizuit-form-sdk@2.0.0/dist/index.umd.js"></script>
+  <script src="https://unpkg.com/@tyconsa/bizuit-ui-components@1.7.0/dist/index.umd.js"></script>
+
+  <!-- Your Form Bundle (Fat Bundle with all your code) -->
+  <script type="module">
+    import FormTemplate from './form.js';
+
+    // Mock Dashboard params for development
+    const mockDashboardParams = {
+      userName: 'Developer',
+      instanceId: 'dev-instance-001',
+      devUsername: 'dev@example.com',
+      devPassword: 'dev-password',
+      devApiUrl: 'https://test.bizuit.com/arielschBizuitDashboardapi/api/'
+    };
+
+    // Render form
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(
+      React.createElement(FormTemplate, { dashboardParams: mockDashboardParams })
+    );
+
+    console.log('✅ Form Template loaded in development mode');
+    console.log('📦 Dashboard Params:', mockDashboardParams);
+  </script>
+</body>
+</html>

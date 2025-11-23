@@ -1,0 +1,13 @@
+{
+  "formName": "form-template",
+  "version": "1.0.0",
+  "builtAt": "2025-11-23T23:52:59.178Z",
+  "sizeBytes": 9373,
+  "entryPoint": "./src/index.tsx",
+  "externals": [
+    "react",
+    "react-dom",
+    "@tyconsa/bizuit-form-sdk",
+    "@tyconsa/bizuit-ui-components"
+  ]
+}
