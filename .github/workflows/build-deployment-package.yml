@@ -752,6 +752,23 @@ jobs:
           path: dashboard-integration-demo/upload/*.zip
           retention-days: 90
 
+      # Upload recubiz-gestion artifact if it was changed
+      - name: Prepare recubiz-gestion artifact name
+        if: contains(steps.changed_forms.outputs.changed_forms, 'recubiz-gestion')
+        run: |
+          # Get the NEWEST ZIP file (sort by modification time)
+          ZIP_FILE=$(ls -t recubiz-gestion/upload/*.zip | head -1)
+          ZIP_BASENAME=$(basename "$ZIP_FILE" .zip)
+          echo "RECUBIZ_GESTION_ARTIFACT=$ZIP_BASENAME" >> $GITHUB_ENV
+
+      - name: Upload recubiz-gestion
+        if: contains(steps.changed_forms.outputs.changed_forms, 'recubiz-gestion')
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.RECUBIZ_GESTION_ARTIFACT }}
+          path: recubiz-gestion/upload/*.zip
+          retention-days: 90
+
       # Add more forms here as needed
       # For any new form, follow the same pattern:
       # 1. Prepare {form-name} artifact name
