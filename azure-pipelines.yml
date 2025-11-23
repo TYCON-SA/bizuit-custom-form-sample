@@ -400,6 +400,7 @@ stages:
 
           # Crear ZIPs individuales por formulario
           - task: Bash@3
+            name: CreateDeploymentZIPs
             displayName: 'Create deployment ZIPs (one per form with independent versions)'
             inputs:
               targetType: 'inline'
@@ -408,6 +409,9 @@ stages:
 
                 FORMS_TO_PACKAGE="$(DetectChangedForms.changedForms)"
                 SHORT_HASH="$(GetBuildMetadata.shortHash)"
+
+                # Crear directorio de staging
+                mkdir -p artifact-staging
 
                 for form_name in $FORMS_TO_PACKAGE; do
                   if [ -d "$form_name" ] && [ -f "$form_name/dist/form.js" ]; then
@@ -431,35 +435,73 @@ stages:
                     # Nombre del ZIP específico para este form CON SU VERSIÓN INDIVIDUAL
                     PACKAGE_NAME="${form_name}-deployment-${FORM_VERSION}-${SHORT_HASH}.zip"
 
-                    # Crear ZIP
+                    # Crear ZIP en artifact-staging (NO en ArtifactStagingDirectory aún)
                     cd "temp-package-$form_name"
-                    zip -r "../$(Build.ArtifactStagingDirectory)/$PACKAGE_NAME" .
+                    zip -r "../artifact-staging/$PACKAGE_NAME" .
                     cd ..
 
                     # Limpiar directorio temporal
                     rm -rf "temp-package-$form_name"
 
                     echo "  ✅ Created: $PACKAGE_NAME"
+
+                    # Guardar info para publicación
+                    echo "${form_name}:${FORM_VERSION}:${SHORT_HASH}" >> artifact-staging/forms-list.txt
                   fi
                 done
 
                 echo ""
                 echo "📊 Deployment ZIPs created:"
-                ls -lh "$(Build.ArtifactStagingDirectory)"/*.zip 2>/dev/null || echo "  No ZIPs found"
+                ls -lh artifact-staging/*.zip 2>/dev/null || echo "  No ZIPs found"
 
                 echo ""
-                echo "🔗 Traceability:"
-                echo "  - Each ZIP is named: {form-name}-deployment-{form-version}-{hash}.zip"
-                echo "  - ZIP filename includes INDEPENDENT version per form + commit hash"
-                echo "  - manifest.json has per-form git tags"
+                echo "📋 Forms list:"
+                cat artifact-staging/forms-list.txt || echo "  No forms"
 
-          # Publicar artefactos
+          # Azure DevOps Limitation: No se pueden crear artifacts dinámicamente
+          # Solución: Publicamos cada ZIP como un artifact separado usando PowerShell
+          - task: PowerShell@2
+            displayName: 'Publish individual form artifacts (dynamic)'
+            inputs:
+              targetType: 'inline'
+              script: |
+                Write-Host "📤 Publishing individual artifacts for each form..."
+
+                if (Test-Path "artifact-staging/forms-list.txt") {
+                  Get-Content "artifact-staging/forms-list.txt" | ForEach-Object {
+                    $parts = $_ -split ':'
+                    $formName = $parts[0]
+                    $version = $parts[1]
+                    $hash = $parts[2]
+                    $zipName = "${formName}-deployment-${version}-${hash}"
+                    $zipFile = "artifact-staging/${zipName}.zip"
+
+                    Write-Host ""
+                    Write-Host "📦 Publishing: $formName"
+                    Write-Host "   Artifact: $zipName"
+                    Write-Host "   Version: $version"
+
+                    # Copiar a un directorio único para este artifact
+                    $artifactDir = "$(Build.ArtifactStagingDirectory)/$zipName"
+                    New-Item -ItemType Directory -Force -Path $artifactDir | Out-Null
+                    Copy-Item $zipFile $artifactDir
+
+                    Write-Host "   ✅ Staged at: $artifactDir"
+                  }
+
+                  Write-Host ""
+                  Write-Host "📊 Artifacts ready:"
+                  Get-ChildItem "$(Build.ArtifactStagingDirectory)" -Recurse -Filter "*.zip"
+                }
+
+          # Publicar artifacts - Azure DevOps creará un artifact por cada subdirectorio
           - task: PublishBuildArtifacts@1
-            displayName: 'Publish deployment packages'
+            displayName: 'Publish all form deployment packages'
             inputs:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-              ArtifactName: '$(artifactName)'
+              ArtifactName: 'drop'
               publishLocation: 'Container'
+            condition: succeeded()
 
           # Commit y push de versiones actualizadas y creación de tags
           - task: Bash@3
