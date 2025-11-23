@@ -19,13 +19,40 @@ import { BizuitSDK } from '@tyconsa/bizuit-form-sdk';
 // ============================================================================
 
 const SDK_CONFIG = {
-  apiUrl: 'https://test.bizuit.com/recubizBizuitDashboardapi/api/',
-  processName: 'RB_ObtenerProximaGestion',
-  idGestor: 999
+  defaultApiUrl: 'https://test.bizuit.com/recubizBizuitDashboardapi/api/',
+  processName: 'RB_ObtenerProximaGestion'
 };
 
-// Initialize SDK instance
-const sdk = new BizuitSDK({ apiUrl: SDK_CONFIG.apiUrl });
+/**
+ * Obtiene el ID de gestor para el usuario autenticado
+ *
+ * TODO: Implementar llamada a proceso Bizuit para obtener idGestor real
+ * Por ejemplo: RB_ObtenerIdGestorPorUsuario(userName) → idGestor
+ *
+ * @param sdk - Instancia del SDK
+ * @param userName - Nombre del usuario autenticado
+ * @param token - Token JWT para autenticar la llamada
+ * @returns Promise<number> - ID del gestor
+ */
+async function obtenerIdGestorPorUsuario(
+  sdk: BizuitSDK,
+  userName: string,
+  token: string
+): Promise<number> {
+  // TODO: Implementar llamada real al proceso
+  // const result = await sdk.forms.startProcess({
+  //   processName: 'RB_ObtenerIdGestorPorUsuario',
+  //   additionalParameters: sdk.forms.createParameters([
+  //     { name: 'pUserName', value: userName }
+  //   ]),
+  //   token
+  // });
+  // return result.parameters.find(p => p.name === 'idGestor')?.value || 999;
+
+  // Por ahora, retornar hardcoded
+  console.log(`📝 obtenerIdGestorPorUsuario('${userName}') → 999 (hardcoded)`);
+  return Promise.resolve(999);
+}
 
 // ============================================================================
 // TYPES
@@ -37,9 +64,11 @@ interface DashboardParameters {
   eventName?: string;
   activityName?: string;
   token?: string;
-  // Dev mode credentials (optional, for local testing)
+  apiUrl?: string;  // From FormLoader (runtime app)
+  // Dev mode only (optional, for local testing)
   devUsername?: string;
   devPassword?: string;
+  devApiUrl?: string;  // Override apiUrl for dev mode
   [key: string]: any;
 }
 
@@ -475,30 +504,41 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
   const [mostrarModalRegistrarAccion, setMostrarModalRegistrarAccion] = useState(false);
 
+  // Initialize SDK with apiUrl
+  // Priority: 1) apiUrl (from FormLoader), 2) devApiUrl (dev override), 3) default
+  const apiUrl = dashboardParams?.apiUrl
+    || dashboardParams?.devApiUrl
+    || SDK_CONFIG.defaultApiUrl;
+
+  const sdk = useState(() => new BizuitSDK({ apiUrl }))[0];
+
+  console.log(`🔗 Using API URL: ${apiUrl}`);
+
   // SDK State
   const [authToken, setAuthToken] = useState<string>('');
+  const [idGestor, setIdGestor] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [error, setError] = useState<{ message: string; retry?: () => void } | null>(null);
 
   // Authenticate on mount
-  // Priority: 1) Use Dashboard token, 2) Fallback to hardcoded login (dev mode only)
+  // Priority: 1) Use Dashboard token, 2) Fallback to dev mode login
   useEffect(() => {
     const authenticate = async () => {
       try {
         setIsLoading(true);
         setLoadingMessage('Autenticando...');
 
+        let token = '';
+
         // Check if token comes from Dashboard
         if (dashboardParams?.token) {
           console.log('✅ Using Dashboard token');
-          setAuthToken(dashboardParams.token);
-          setIsLoading(false);
-          return;
+          token = dashboardParams.token;
+          setAuthToken(token);
         }
-
         // Fallback: Dev mode login (requires devUsername/devPassword in dashboardParams)
-        if (dashboardParams?.devUsername && dashboardParams?.devPassword) {
+        else if (dashboardParams?.devUsername && dashboardParams?.devPassword) {
           console.warn('⚠️ Dev mode: Using credentials from dashboardParams');
           const loginResult = await sdk.auth.login({
             username: dashboardParams.devUsername,
@@ -506,7 +546,8 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
           });
 
           if (loginResult.Token) {
-            setAuthToken(loginResult.Token);
+            token = loginResult.Token;
+            setAuthToken(token);
           } else {
             throw new Error('Error al autenticar. Verifique las credenciales de dev.');
           }
@@ -516,6 +557,12 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
             'In dev mode, provide devUsername and devPassword in dashboardParams.'
           );
         }
+
+        // Obtener idGestor para el usuario autenticado
+        const userName = dashboardParams?.userName || 'Gestor Demo';
+        const gestorId = await obtenerIdGestorPorUsuario(sdk, userName, token);
+        setIdGestor(gestorId);
+        console.log(`✅ ID Gestor: ${gestorId} para usuario: ${userName}`);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Error desconocido al autenticar';
         setError({
@@ -562,11 +609,16 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
       setIsLoading(true);
       setLoadingMessage('Solicitando nueva deuda...');
 
+      // Verificar que tenemos idGestor
+      if (!idGestor) {
+        throw new Error('ID Gestor no disponible. Por favor espere a que se complete la autenticación.');
+      }
+
       // Call the RB_ObtenerProximaGestion process using FormService
       const result = await sdk.forms.startProcess({
         processName: SDK_CONFIG.processName,
         additionalParameters: sdk.forms.createParameters([
-          { name: 'idGestor', value: String(SDK_CONFIG.idGestor) }
+          { name: 'idGestor', value: String(idGestor) }
         ]),
         token: authToken
       });
@@ -719,11 +771,16 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
       setIsLoading(true);
       setLoadingMessage('Iniciando gestión...');
 
+      // Verificar que tenemos idGestor
+      if (!idGestor) {
+        throw new Error('ID Gestor no disponible.');
+      }
+
       // Call RB_IniciarGestion process using FormService
       const result = await sdk.forms.startProcess({
         processName: 'RB_IniciarGestion',
         additionalParameters: sdk.forms.createParameters([
-          { name: 'idGestor', value: String(SDK_CONFIG.idGestor) },
+          { name: 'idGestor', value: String(idGestor) },
           { name: 'idDeudor', value: String(deudaActual.idDeudor) },
           { name: 'idDeuda', value: String(deudaActual.idDeuda) }
         ]),

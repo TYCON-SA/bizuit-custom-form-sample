@@ -76,6 +76,26 @@ cp -r recubiz-gestion my-new-form
 cd my-new-form
 ```
 
+2. **Setup de credenciales de desarrollo:**
+
+```bash
+# Copiar template de credenciales
+cp dev-credentials.example.js dev-credentials.js
+
+# Editar con tus credenciales (este archivo NO se commitea)
+nano dev-credentials.js
+```
+
+**dev-credentials.js:**
+```javascript
+export const DEV_CREDENTIALS = {
+  username: 'tu-usuario-bizuit',
+  password: 'tu-password'
+};
+```
+
+⚠️ **IMPORTANTE:** `dev-credentials.js` está en `.gitignore` y contiene credenciales sensibles.
+
 2. **Actualizar `package.json`:**
 
 ```json
@@ -159,7 +179,29 @@ export default function MyNewForm({ dashboardParams }: FormProps) {
 
 ## 🧪 Testing en Dev Mode
 
-### 1. Build del Form
+### 1. Setup de Credenciales (Primera vez)
+
+```bash
+cd recubiz-gestion
+
+# Copiar template
+cp dev-credentials.example.js dev-credentials.js
+
+# Editar con tus credenciales
+nano dev-credentials.js
+```
+
+**dev-credentials.js:**
+```javascript
+export const DEV_CREDENTIALS = {
+  username: 'admin',        // Tu usuario Bizuit
+  password: 'admin123'      // Tu password
+};
+```
+
+⚠️ Este archivo está en `.gitignore` - NO se commitea al repo.
+
+### 2. Build del Form
 
 ```bash
 cd recubiz-gestion
@@ -176,7 +218,7 @@ npm run build
 📊 Size: 50.88 KB
 ```
 
-### 2. Levantar HTTP Server
+### 3. Levantar HTTP Server
 
 **En el directorio del form:**
 
@@ -188,6 +230,21 @@ http-server -p 8080 --cors
 - **Dev Page:** http://localhost:8080/dev.html
 - **Form JS:** http://localhost:8080/dist/form.js
 - **Source Map:** http://localhost:8080/dist/form.js.map
+
+### 4. Testing con Credenciales
+
+**El form automáticamente:**
+
+1. Lee credenciales de `dev-credentials.js`
+2. Hace login con esas credenciales
+3. Obtiene token JWT del API
+4. Funciona normalmente
+
+**Console logs:**
+```
+⚠️ Dev mode: Using credentials from dashboardParams
+✅ Authenticated successfully
+```
 
 ### 3. Workflow de Desarrollo
 
@@ -478,7 +535,142 @@ CORS_ORIGINS=https://test.bizuit.com,http://localhost:3001
 
 ---
 
+## 🔐 Seguridad y Credenciales
+
+### Dev Credentials Pattern
+
+**Archivo gitignored para credenciales de desarrollo:**
+
+```bash
+# Cada form puede tener su propio dev-credentials.js
+recubiz-gestion/
+├── dev-credentials.js         # ← Gitignored (credenciales reales)
+└── dev-credentials.example.js # ← Committed (template vacío)
+```
+
+**Cómo funciona:**
+
+1. **Developer setup:**
+   ```bash
+   cp dev-credentials.example.js dev-credentials.js
+   # Editar con credenciales propias
+   ```
+
+2. **dev.html carga las credenciales:**
+   ```javascript
+   import { DEV_CREDENTIALS } from './dev-credentials.js';
+
+   const mockDashboardParams = {
+     devUsername: DEV_CREDENTIALS.username,
+     devPassword: DEV_CREDENTIALS.password
+   };
+   ```
+
+3. **Form detecta contexto:**
+   ```typescript
+   // Producción: usa dashboardParams.token
+   if (dashboardParams?.token) {
+     setAuthToken(dashboardParams.token);
+   }
+   // Dev: usa devUsername/devPassword
+   else if (dashboardParams?.devUsername) {
+     const result = await sdk.auth.login({...});
+     setAuthToken(result.Token);
+   }
+   ```
+
+### Ventajas de este Pattern
+
+1. ✅ **Sin secretos en el código fuente**
+2. ✅ **Sin secretos en el bundle compilado**
+3. ✅ **Cada developer usa sus credenciales**
+4. ✅ **Template incluido en el repo (dev-credentials.example.js)**
+5. ✅ **Producción NO usa credenciales hardcodeadas**
+6. ✅ **Clear error si faltan credenciales**
+
+### Qué NO se commitea
+
+```bash
+# .gitignore includes:
+*/dev-credentials.js      # ← Credenciales reales
+dev-credentials.js        # ← Root level también
+.env.local                # ← Variables de entorno
+artifact-staging/         # ← Archivos temporales de CI/CD
+```
+
+### Qué SÍ se commitea
+
+```bash
+*/dev-credentials.example.js  # ← Template para developers
+.gitignore                    # ← Configuración de gitignore
+README.md                     # ← Documentación
+```
+
+---
+
 ## 🔧 Troubleshooting
+
+### Error: "Cannot import DEV_CREDENTIALS"
+
+**Error completo:** `Failed to load module script: Expected a JavaScript module script but the server responded with a MIME type of "text/html"`
+
+**Causa:** Falta el archivo `dev-credentials.js`
+
+**Solución:**
+
+```bash
+cd recubiz-gestion
+cp dev-credentials.example.js dev-credentials.js
+
+# Editar con tus credenciales
+nano dev-credentials.js
+```
+
+### Error: "Error al autenticar"
+
+**Síntoma:** Form muestra mensaje de error en pantalla
+
+**Causas posibles:**
+
+1. **Credenciales incorrectas:**
+   ```bash
+   # Verificar dev-credentials.js
+   cat dev-credentials.js
+
+   # Debe tener usuario/password válidos
+   ```
+
+2. **API no accesible:**
+   ```bash
+   # Test manual del endpoint
+   curl https://test.bizuit.com/recubizBizuitDashboardapi/api/Account/Login \
+     -H "Content-Type: application/json" \
+     -d '{"username":"admin","password":"admin123"}'
+
+   # Debe retornar: {"Token":"eyJhbGc..."}
+   ```
+
+3. **CORS bloqueado:**
+   - Verificar que http-server usa flag `--cors`
+   - Verificar Backend API tiene CORS configurado
+
+### Error: "No token provided"
+
+**Error completo:** `No token provided. In production, token must come from Dashboard. In dev mode, provide devUsername and devPassword in dashboardParams.`
+
+**Causa:** dev.html no está pasando credenciales
+
+**Solución:**
+
+```javascript
+// Verificar que dev.html tiene:
+import { DEV_CREDENTIALS } from './dev-credentials.js';
+
+const mockDashboardParams = {
+  devUsername: DEV_CREDENTIALS.username,  // ← Debe estar
+  devPassword: DEV_CREDENTIALS.password   // ← Debe estar
+};
+```
 
 ### Form no carga en dev.html
 

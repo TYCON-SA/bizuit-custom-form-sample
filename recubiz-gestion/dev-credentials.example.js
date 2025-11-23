@@ -9,5 +9,6 @@
 
 export const DEV_CREDENTIALS = {
   username: 'your-username-here',
-  password: 'your-password-here'
+  password: 'your-password-here',
+  apiUrl: 'https://test.bizuit.com/recubizBizuitDashboardapi/api/'
 };

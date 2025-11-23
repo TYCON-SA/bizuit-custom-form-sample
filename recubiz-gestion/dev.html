@@ -92,8 +92,8 @@
     const root = ReactDOM.createRoot(container);
 
     // Mock dashboard parameters for testing
-    // In dev mode: pass devUsername/devPassword for authentication
-    // In production: Dashboard provides token
+    // In dev mode: pass devUsername/devPassword/devApiUrl
+    // In production: Dashboard/FormLoader provides token and apiUrl
     const mockDashboardParams = {
       userName: 'Gestor Demo',
       instanceId: 'INST-12345',
@@ -101,7 +101,8 @@
       activityName: 'GestionarDeuda',
       // Dev credentials (NOT committed to repo)
       devUsername: DEV_CREDENTIALS.username,
-      devPassword: DEV_CREDENTIALS.password
+      devPassword: DEV_CREDENTIALS.password,
+      devApiUrl: DEV_CREDENTIALS.apiUrl
     };
 
     // Render the form
