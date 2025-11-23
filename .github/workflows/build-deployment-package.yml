@@ -703,30 +703,15 @@ jobs:
           echo "📋 Artifact information:"
           cat artifact_info.json
 
-      # Upload artifacts for each form dynamically
-      # We'll create a script that handles all forms
-      - name: Upload all form artifacts
-        run: |
-          echo "📤 Uploading artifacts for all changed forms..."
-
-          CHANGED_FORMS="${{ steps.changed_forms.outputs.changed_forms }}"
-
-          for form_name in $CHANGED_FORMS; do
-            if [ -d "$form_name/upload" ] && ls "$form_name/upload/"*.zip 1> /dev/null 2>&1; then
-              # Get the NEWEST ZIP filename (the one we just created)
-              # Use ls -t to sort by modification time, newest first
-              ZIP_FILE=$(ls -t "$form_name/upload/"*.zip | head -1)
-              ZIP_BASENAME=$(basename "$ZIP_FILE" .zip)
-
-              echo ""
-              echo "📦 Processing artifact for: $form_name"
-              echo "   ZIP file: $(basename $ZIP_FILE)"
-              echo "   Artifact name: $ZIP_BASENAME"
-
-              # Create a marker file with the artifact name for the next step
-              echo "$ZIP_BASENAME" > "${form_name}_artifact_name.txt"
-            fi
-          done
+      # Upload all ZIPs as a temporary artifact for the second job to consume
+      - name: Upload ZIPs for artifact job
+        if: steps.changed_forms.outputs.no_changes != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-zips-temp
+          path: |
+            */upload/*.zip
+          retention-days: 1  # Temporary, just for passing to next job
 
       - name: Commit and push deployment ZIPs and updated package.json files
         if: steps.changed_forms.outputs.no_changes != 'true'
@@ -916,15 +901,15 @@ jobs:
         form: ${{ fromJson(needs.build-deployment-package.outputs.changed_forms_json) }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Download build ZIPs
+        uses: actions/download-artifact@v4
         with:
-          ref: main  # Pull the latest main with ZIPs committed
+          name: build-zips-temp
 
       - name: Get artifact name
         id: artifact_info
         run: |
-          # Get the NEWEST ZIP file for this form
+          # Get the ZIP file for this form from the downloaded artifacts
           if [ -d "${{ matrix.form }}/upload" ]; then
             ZIP_FILE=$(ls -t ${{ matrix.form }}/upload/*.zip 2>/dev/null | head -1)
             if [ -n "$ZIP_FILE" ]; then
@@ -932,6 +917,7 @@ jobs:
               echo "artifact_name=$ZIP_BASENAME" >> $GITHUB_OUTPUT
               echo "zip_path=$ZIP_FILE" >> $GITHUB_OUTPUT
               echo "✅ Found artifact: $ZIP_BASENAME"
+              echo "   Path: $ZIP_FILE"
             else
               echo "❌ No ZIP found for ${{ matrix.form }}"
               exit 1
