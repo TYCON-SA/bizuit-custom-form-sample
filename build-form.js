@@ -79,6 +79,12 @@ async function buildForm() {
       minify: true,
       sourcemap: true,
 
+      // Mark external dependencies (loaded by runtime app)
+      external: [
+        '@tyconsa/bizuit-form-sdk',
+        '@tyconsa/bizuit-ui-components',
+      ],
+
       // Use plugin to inject global React references
       plugins: [globalReactPlugin],
 
@@ -132,7 +138,12 @@ const ReactDOM = window.ReactDOM;
       builtAt: new Date().toISOString(),
       sizeBytes: stats.size,
       entryPoint: config.entryPoint,
-      externals: ['react', 'react-dom'],
+      externals: [
+        'react',
+        'react-dom',
+        '@tyconsa/bizuit-form-sdk',
+        '@tyconsa/bizuit-ui-components',
+      ],
     };
 
     const metadataPath = config.outfile.replace('.js', '.meta.json');
