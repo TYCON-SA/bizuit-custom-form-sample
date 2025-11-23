@@ -1,7 +1,7 @@
 /**
  * Recubiz - Sistema de Gestión de Cobranzas
  * Professional debt collection management system
- * @version 1.0.0
+ * @author Tyconsa
  */
 
 import { useState, useEffect } from 'react';
