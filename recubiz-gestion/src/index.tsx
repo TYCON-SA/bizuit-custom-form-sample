@@ -1,6 +1,7 @@
 /**
  * Recubiz - Sistema de Gestión de Cobranzas
  * Professional debt collection management system
+ * @license MIT
  */
 
 import { useState, useEffect } from 'react';
