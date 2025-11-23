@@ -692,7 +692,16 @@ jobs:
                        -m "" \
                        -m "🤖 Automated commit by GitHub Actions"
 
+            # Pull con rebase antes de push para evitar race conditions
+            echo "🔄 Pulling latest changes with rebase..."
+            git pull --rebase origin main || {
+              echo "⚠️  Rebase failed, aborting and retrying with merge strategy..."
+              git rebase --abort 2>/dev/null || true
+              git pull --no-rebase origin main
+            }
+
             # Push usando el token del workflow
+            echo "📤 Pushing changes to repository..."
             git push origin HEAD:main
 
             echo "✅ Changes committed and pushed to repository"
