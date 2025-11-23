@@ -88,15 +88,6 @@ interface DetalleDeuda {
   deudaReal?: number;
 }
 
-interface DeudaItem {
-  id: number;
-  nombre: string;
-  descripcion?: string;
-  fecha: string;
-  active?: boolean;
-  detalles: DetalleDeuda[];
-}
-
 // Para gestión - estructura simplificada para UI
 interface Deuda {
   id: string;
@@ -491,52 +482,90 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
         authToken
       );
 
+      // Log raw response for debugging
+      console.log('🔍 SDK Response (raw):', JSON.stringify(result, null, 2));
+
       // Check for errors
       if (result.status === 'Error') {
         throw new Error(result.errorMessage || 'Error al solicitar nueva deuda');
       }
 
-      // Parse DatosGestion parameter from output
-      const datosGestionParam = result.parameters?.find((p) => p.name === 'DatosGestion');
+      // Parse Datosgestion parameter from output (note: lowercase 'g')
+      const datosGestionParam = result.parameters?.find((p) => p.name === 'Datosgestion');
 
       if (!datosGestionParam || !datosGestionParam.value) {
         throw new Error('No se recibieron datos de gestión del proceso');
       }
 
-      // Parse the value - it could be JSON string or already parsed
-      let datosGestion: any;
-      if (typeof datosGestionParam.value === 'string') {
-        try {
-          datosGestion = JSON.parse(datosGestionParam.value);
-        } catch {
-          // If not JSON, assume it's already parsed
-          datosGestion = datosGestionParam.value;
+      console.log('🔍 Datosgestion parameter:', datosGestionParam);
+
+      // Parse XML string
+      let xmlDoc: Document;
+      try {
+        const parser = new DOMParser();
+        const xmlString = typeof datosGestionParam.value === 'string'
+          ? datosGestionParam.value
+          : String(datosGestionParam.value);
+
+        console.log('🔍 XML string to parse:', xmlString);
+
+        xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+
+        // Check for parsing errors
+        const parserError = xmlDoc.querySelector('parsererror');
+        if (parserError) {
+          throw new Error(`Error al parsear XML: ${parserError.textContent}`);
         }
-      } else {
-        datosGestion = datosGestionParam.value;
+      } catch (err) {
+        console.error('❌ Error parsing XML:', err);
+        throw new Error('Error al parsear los datos XML del proceso');
       }
 
-      // Map DatosGestion to Deuda interface
+      // Extract DatosPersonales
+      const datosPersonalesNode = xmlDoc.querySelector('Deudor > DatosPersonales');
+      const idPersonal = datosPersonalesNode?.querySelector('ID')?.textContent || `D-${Date.now()}`;
+      const nombre = datosPersonalesNode?.querySelector('Nombre')?.textContent || 'Sin nombre';
+      const cuit = datosPersonalesNode?.querySelector('CUIT')?.textContent || 'Sin CUIT';
+      const numeroDocumento = datosPersonalesNode?.querySelector('NumeroDocumento')?.textContent || 'Sin documento';
+      const fechaNacimiento = datosPersonalesNode?.querySelector('FechaNacimiento')?.textContent || new Date().toISOString();
+
+      console.log('🔍 DatosPersonales:', { idPersonal, nombre, cuit, numeroDocumento, fechaNacimiento });
+
+      // Extract Deudas and Detalles
+      const deudasNodes = xmlDoc.querySelectorAll('Deudor > Deudas > Deuda');
+      const detalles: DetalleDeuda[] = [];
+
+      deudasNodes.forEach((deudaNode) => {
+        const detallesNodes = deudaNode.querySelectorAll('Detalles > Detalle');
+
+        detallesNodes.forEach((detalleNode) => {
+          const detalle: DetalleDeuda = {
+            id: parseInt(detalleNode.querySelector('ID')?.textContent || String(detalles.length + 1)),
+            fecha: detalleNode.querySelector('Fecha')?.textContent || new Date().toISOString().split('T')[0],
+            importeOriginal: parseFloat(detalleNode.querySelector('ImporteOriginal')?.textContent || '0'),
+            importe: parseFloat(detalleNode.querySelector('Importe')?.textContent || '0'),
+            producto: detalleNode.querySelector('Producto')?.textContent || undefined,
+            descripcion: detalleNode.querySelector('Descripcion')?.textContent || undefined,
+            acreedorOriginal: detalleNode.querySelector('AcreedorOriginal')?.textContent || undefined,
+            active: detalleNode.querySelector('Active')?.textContent === 'true'
+          };
+
+          detalles.push(detalle);
+        });
+      });
+
+      console.log('🔍 Detalles extracted:', detalles);
+
+      // Map XML data to Deuda interface
       const nuevaDeuda: Deuda = {
-        id: datosGestion.id || `D-${Date.now()}`,
-        deudor: datosGestion.datosPersonales?.nombre || 'Sin nombre',
-        numeroDocumento: datosGestion.datosPersonales?.numeroDocumento || 'Sin documento',
-        cuit: datosGestion.datosPersonales?.cuit || 'Sin CUIT',
-        fechaNacimiento: datosGestion.datosPersonales?.fechaNacimiento || new Date().toISOString(),
+        id: idPersonal,
+        deudor: nombre,
+        numeroDocumento: numeroDocumento,
+        cuit: cuit,
+        fechaNacimiento: fechaNacimiento,
         fechaAlta: new Date().toISOString().split('T')[0],
         estado: 'nueva',
-        detalles: (datosGestion.deudas || []).flatMap((deudaItem: DeudaItem) =>
-          (deudaItem.detalles || []).map((detalle: DetalleDeuda) => ({
-            id: detalle.id,
-            fecha: detalle.fecha,
-            importeOriginal: detalle.importeOriginal,
-            importe: detalle.importe,
-            producto: detalle.producto,
-            descripcion: detalle.descripcion,
-            acreedorOriginal: detalle.acreedorOriginal,
-            active: detalle.active
-          }))
-        )
+        detalles: detalles
       };
 
       setDeudaActual(nuevaDeuda);
