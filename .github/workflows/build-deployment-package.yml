@@ -26,6 +26,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write  # Necesario para hacer push al repositorio
+    outputs:
+      changed_forms_json: ${{ steps.changed_forms.outputs.changed_forms_json }}
+      has_changes: ${{ steps.changed_forms.outputs.no_changes != 'true' }}
 
     steps:
       - name: Checkout code
@@ -103,6 +106,7 @@ jobs:
           if [ "$CHANGED_FORMS" = "NONE" ]; then
             echo "no_changes=true" >> $GITHUB_OUTPUT
             echo "changed_forms=" >> $GITHUB_OUTPUT
+            echo "changed_forms_json=[]" >> $GITHUB_OUTPUT
             echo "🔴 No forms to build - workflow will skip build steps"
           else
             echo "no_changes=false" >> $GITHUB_OUTPUT
@@ -110,8 +114,14 @@ jobs:
             FORMS_ARRAY=$(echo "$CHANGED_FORMS" | tr '\n' ' ')
             echo "changed_forms=$FORMS_ARRAY" >> $GITHUB_OUTPUT
 
+            # Convertir a JSON array para matrix strategy
+            FORMS_JSON=$(echo "$CHANGED_FORMS" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            echo "changed_forms_json=$FORMS_JSON" >> $GITHUB_OUTPUT
+
             echo "📝 Forms to build:"
             echo "$CHANGED_FORMS"
+            echo ""
+            echo "📋 JSON array: $FORMS_JSON"
           fi
 
       - name: Calculate per-form versions (independent versioning)
@@ -718,50 +728,6 @@ jobs:
             fi
           done
 
-      # Upload ALL form artifacts dynamically
-      # This step uploads all ZIPs from */upload/*.zip as individual artifacts
-      - name: Upload form artifacts (dynamic)
-        if: steps.changed_forms.outputs.no_changes != 'true'
-        run: |
-          echo "📤 Uploading artifacts for all changed forms..."
-
-          CHANGED_FORMS="${{ steps.changed_forms.outputs.changed_forms }}"
-
-          for form_name in $CHANGED_FORMS; do
-            if [ -d "$form_name/upload" ] && ls "$form_name/upload/"*.zip 1> /dev/null 2>&1; then
-              # Get the NEWEST ZIP filename (the one we just created)
-              ZIP_FILE=$(ls -t "$form_name/upload/"*.zip | head -1)
-              ZIP_BASENAME=$(basename "$ZIP_FILE" .zip)
-
-              echo ""
-              echo "📦 Form: $form_name"
-              echo "   ZIP: $(basename $ZIP_FILE)"
-              echo "   Artifact name: $ZIP_BASENAME"
-
-              # Store artifact info for GitHub Actions artifact upload step
-              # We'll use this in the next step with upload-artifact action
-              mkdir -p .artifacts-metadata
-              echo "$ZIP_FILE" > ".artifacts-metadata/${form_name}.path"
-              echo "$ZIP_BASENAME" > ".artifacts-metadata/${form_name}.name"
-            fi
-          done
-
-          echo ""
-          echo "✅ Artifact metadata prepared"
-          ls -la .artifacts-metadata/ || echo "No artifacts to upload"
-
-      # GitHub Actions requires separate upload-artifact steps for each artifact
-      # We use a workaround: upload all ZIPs with merge-multiple
-      - name: Upload all deployment packages
-        if: steps.changed_forms.outputs.no_changes != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployment-packages-${{ steps.build_metadata.outputs.short_hash }}
-          path: |
-            */upload/*.zip
-          retention-days: 90
-          if-no-files-found: warn
-
       - name: Commit and push deployment ZIPs and updated package.json files
         if: steps.changed_forms.outputs.no_changes != 'true'
         run: |
@@ -938,3 +904,46 @@ jobs:
           echo "- Each form has **independent versioning**" >> $GITHUB_STEP_SUMMARY
           echo "- Git tags are the **source of truth** (format: \`{form-name}-v{version}\`)" >> $GITHUB_STEP_SUMMARY
           echo "- package.json versions are auto-corrected if manually changed" >> $GITHUB_STEP_SUMMARY
+
+  # Second job: Upload artifacts per form using matrix strategy
+  upload-artifacts:
+    name: Upload artifact for ${{ matrix.form }}
+    needs: build-deployment-package
+    if: needs.build-deployment-package.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        form: ${{ fromJson(needs.build-deployment-package.outputs.changed_forms_json) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main  # Pull the latest main with ZIPs committed
+
+      - name: Get artifact name
+        id: artifact_info
+        run: |
+          # Get the NEWEST ZIP file for this form
+          if [ -d "${{ matrix.form }}/upload" ]; then
+            ZIP_FILE=$(ls -t ${{ matrix.form }}/upload/*.zip 2>/dev/null | head -1)
+            if [ -n "$ZIP_FILE" ]; then
+              ZIP_BASENAME=$(basename "$ZIP_FILE" .zip)
+              echo "artifact_name=$ZIP_BASENAME" >> $GITHUB_OUTPUT
+              echo "zip_path=$ZIP_FILE" >> $GITHUB_OUTPUT
+              echo "✅ Found artifact: $ZIP_BASENAME"
+            else
+              echo "❌ No ZIP found for ${{ matrix.form }}"
+              exit 1
+            fi
+          else
+            echo "❌ Upload directory not found for ${{ matrix.form }}"
+            exit 1
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifact_info.outputs.artifact_name }}
+          path: ${{ steps.artifact_info.outputs.zip_path }}
+          retention-days: 90
