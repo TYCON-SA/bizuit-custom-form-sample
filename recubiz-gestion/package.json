@@ -1,6 +1,6 @@
 {
   "name": "@tyconsa/bizuit-form-recubiz-gestion",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Formulario de gestión de cobranzas Recubiz",
   "main": "dist/form.js",
   "scripts": {
