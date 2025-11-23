@@ -11,6 +11,14 @@ Este repositorio demuestra cómo crear custom forms que:
 3. **Se empaquetan** para deployment offline via GitHub Actions
 4. **Se cargan dinámicamente** en runtime sin redeployment de IIS/Next.js
 
+## 📚 Documentación
+
+- **[Guía de Desarrollo](DEVELOPMENT.md)** - Desarrollo local, testing con dev.html, debugging
+- **[Guía de Deployment](DEPLOYMENT_GUIDE.md)** - Setup de entornos, deployment a arielsch/recubiz, troubleshooting
+- **[Versioning](VERSIONING.md)** - Sistema de versionado independiente por form
+- **[Azure DevOps Setup](AZURE_DEVOPS_SETUP.md)** - Configuración de pipelines (deprecado, usar GitHub Actions)
+- **[Changelog](CHANGELOG.md)** - Historial de cambios
+
 ## 🏗️ Estructura del Repositorio
 
 ```
