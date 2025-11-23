@@ -539,7 +539,10 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
         }
         // Fallback: Dev mode login (requires devUsername/devPassword in dashboardParams)
         else if (dashboardParams?.devUsername && dashboardParams?.devPassword) {
-          console.warn('⚠️ Dev mode: Using credentials from dashboardParams');
+          console.warn('⚠️ Dev mode: Using credentials from dashboardParams (FormLoader)');
+          console.log('   devUsername:', dashboardParams.devUsername);
+          console.log('   apiUrl from dashboardParams:', dashboardParams.apiUrl || dashboardParams.devApiUrl || 'NOT SET');
+
           const loginResult = await sdk.auth.login({
             username: dashboardParams.devUsername,
             password: dashboardParams.devPassword
