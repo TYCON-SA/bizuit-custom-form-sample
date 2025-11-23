@@ -1,7 +1,7 @@
 /**
  * Recubiz - Sistema de Gestión de Cobranzas
  * Professional debt collection management system
- * v1.0.3 - Workflow stable with optimizations
+ * v1.0.4 - Fix artifact double-zipping issue
  */
 
 import { useState, useEffect, useMemo } from 'react';
