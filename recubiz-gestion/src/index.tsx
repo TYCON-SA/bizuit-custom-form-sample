@@ -1,10 +1,7 @@
 /**
  * Recubiz - Sistema de Gestión de Cobranzas
  * Professional debt collection management system
- * BUILD: v200
  */
-
-console.log('🔥 RECUBIZ FORM LOADED - BUILD v200');
 
 import { useState, useEffect } from 'react';
 import { version as FORM_VERSION } from '../package.json';
