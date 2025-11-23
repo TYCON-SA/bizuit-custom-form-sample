@@ -98,6 +98,7 @@ interface Deuda {
   fechaAlta: string;
   estado: 'nueva' | 'gestionando' | 'finalizada';
   detalles: DetalleDeuda[];
+  contactos: Contacto[];
   // Campos internos de gestión (no se muestran en UI)
   idDeudor?: number;
   idDeuda?: number;
@@ -143,7 +144,8 @@ const MOCK_DEUDAS_NUEVAS: Deuda[] = [
         producto: '1040754306',
         descripcion: 'Samsung Galaxy S10 - Tablet iPad Mini'
       }
-    ]
+    ],
+    contactos: []
   }
 ];
 
@@ -173,7 +175,8 @@ const MOCK_DEUDAS_HISTORIAL: Deuda[] = [
         producto: '1040754307',
         descripcion: 'Mouse Logitech MX Master 3'
       }
-    ]
+    ],
+    contactos: []
   },
   {
     id: 'D-2023-045',
@@ -192,16 +195,9 @@ const MOCK_DEUDAS_HISTORIAL: Deuda[] = [
         producto: '1040754308',
         descripcion: 'Smart TV 55" Samsung QLED'
       }
-    ]
+    ],
+    contactos: []
   }
-];
-
-const MOCK_CONTACTOS: Contacto[] = [
-  { id: 'C1', tipo: 'Teléfono Móvil', valor: '351 663 9967', estado: 'INICIAL' },
-  { id: 'C2', tipo: 'Teléfono Laboral', valor: '351 445 5566', estado: 'INICIAL' },
-  { id: 'C3', tipo: 'Email Personal', valor: 'deudor@email.com', estado: 'INICIAL' },
-  { id: 'C4', tipo: 'WhatsApp', valor: '351 663 9967', estado: 'INICIAL' },
-  { id: 'C5', tipo: 'Instagram', valor: '@deudor_ar', estado: 'INICIAL' }
 ];
 
 // Acciones previas (readonly - ya registradas en gestiones anteriores)
@@ -377,6 +373,61 @@ function AccionRow({ accion, index, onClick }: { accion: Accion; index: number; 
       <td className="px-6 py-4 text-sm text-gray-600">{accion.contacto}</td>
       <td className="px-6 py-4 text-sm text-gray-900">{truncateText(accion.observaciones)}</td>
     </tr>
+  );
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Returns the appropriate SVG icon for a contact type
+ */
+function getContactIcon(tipoContacto: string | undefined): JSX.Element {
+  const tipo = (tipoContacto || '').toLowerCase();
+
+  // Phone icon (for mobile, landline, work phone, etc.)
+  if (tipo.includes('teléfono') || tipo.includes('telefono') || tipo.includes('móvil') || tipo.includes('movil') || tipo.includes('celular') || tipo.includes('phone')) {
+    return (
+      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+      </svg>
+    );
+  }
+
+  // Email icon
+  if (tipo.includes('email') || tipo.includes('correo') || tipo.includes('mail')) {
+    return (
+      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+    );
+  }
+
+  // WhatsApp icon
+  if (tipo.includes('whatsapp') || tipo.includes('wpp')) {
+    return (
+      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
+    );
+  }
+
+  // Instagram/Social media icon
+  if (tipo.includes('instagram') || tipo.includes('facebook') || tipo.includes('twitter') || tipo.includes('social')) {
+    return (
+      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    );
+  }
+
+  // Default contact icon
+  return (
+    <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+    </svg>
   );
 }
 
@@ -562,6 +613,35 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
 
       console.log('🔍 IDs for process:', { idDeudor: parseInt(idPersonal), idDeuda });
 
+      // Extract contactos from parsed JSON
+      const contactosArray = datosGestion?.deudor?.contactos?.contacto || [];
+      const contactos: Contacto[] = [];
+
+      // Ensure contactosArray is an array (single item might not be in array)
+      const contactosItems = Array.isArray(contactosArray) ? contactosArray : [contactosArray];
+
+      contactosItems.forEach((contacto: any) => {
+        // Skip empty objects
+        if (!contacto || Object.keys(contacto).length === 0) return;
+
+        const contactoItem: Contacto = {
+          id: contacto.id || `C${contactos.length + 1}`,
+          idTipoContacto: contacto.idTipoContacto ? parseInt(contacto.idTipoContacto) : undefined,
+          tipoContacto: contacto.tipoContacto || undefined,
+          tipo: contacto.tipoContacto || undefined,  // For UI compatibility
+          contacto: contacto.contacto || undefined,
+          valor: contacto.contacto || undefined,  // For UI compatibility
+          estado: contacto.estado || 'INICIAL',
+          fecha: contacto.fecha || undefined,
+          piso: contacto.piso || undefined,
+          depto: contacto.depto || undefined
+        };
+
+        contactos.push(contactoItem);
+      });
+
+      console.log('🔍 Contactos extracted:', contactos);
+
       // Map XML data to Deuda interface
       const nuevaDeuda: Deuda = {
         id: idPersonal,
@@ -572,6 +652,7 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
         fechaAlta: new Date().toISOString().split('T')[0],
         estado: 'nueva',
         detalles: detalles,
+        contactos: contactos,
         // Internal fields for process management
         idDeudor: parseInt(idPersonal),
         idDeuda: idDeuda
@@ -1234,106 +1315,36 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div
-                  onClick={() => {
-                    setContactoSeleccionado(MOCK_CONTACTOS[0]);
-                    setMostrarModalRegistrarAccion(true);
-                  }}
-                  className="bg-gray-50 rounded-xl shadow-sm hover:shadow-xl hover:bg-orange-50 hover:border-l-8 transition-all border-l-4 border-orange-500 p-4 cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
+                {deudaActual.contactos && deudaActual.contactos.length > 0 ? (
+                  deudaActual.contactos.map((contacto) => (
+                    <div
+                      key={contacto.id}
+                      onClick={() => {
+                        setContactoSeleccionado(contacto);
+                        setMostrarModalRegistrarAccion(true);
+                      }}
+                      className="bg-gray-50 rounded-xl shadow-sm hover:shadow-xl hover:bg-orange-50 hover:border-l-8 transition-all border-l-4 border-orange-500 p-4 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
+                          {getContactIcon(contacto.tipoContacto || contacto.tipo)}
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                            {contacto.tipoContacto || contacto.tipo || 'Contacto'}
+                          </p>
+                          <p className="text-base font-bold text-gray-900">
+                            {contacto.contacto || contacto.valor || 'Sin información'}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Teléfono Móvil</p>
-                      <p className="text-base font-bold text-gray-900">351 663 9967</p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-8 text-gray-500">
+                    No hay contactos disponibles para este deudor
                   </div>
-                </div>
-
-                <div
-                  onClick={() => {
-                    setContactoSeleccionado(MOCK_CONTACTOS[1]);
-                    setMostrarModalRegistrarAccion(true);
-                  }}
-                  className="bg-gray-50 rounded-xl shadow-sm hover:shadow-xl hover:bg-orange-50 hover:border-l-8 transition-all border-l-4 border-orange-500 p-4 cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Teléfono Laboral</p>
-                      <p className="text-base font-bold text-gray-900">351 445 5566</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  onClick={() => {
-                    setContactoSeleccionado(MOCK_CONTACTOS[2]);
-                    setMostrarModalRegistrarAccion(true);
-                  }}
-                  className="bg-gray-50 rounded-xl shadow-sm hover:shadow-xl hover:bg-orange-50 hover:border-l-8 transition-all border-l-4 border-orange-500 p-4 cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Email Personal</p>
-                      <p className="text-base font-bold text-gray-900">deudor@email.com</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  onClick={() => {
-                    setContactoSeleccionado(MOCK_CONTACTOS[3]);
-                    setMostrarModalRegistrarAccion(true);
-                  }}
-                  className="bg-gray-50 rounded-xl shadow-sm hover:shadow-xl hover:bg-orange-50 hover:border-l-8 transition-all border-l-4 border-orange-500 p-4 cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">WhatsApp</p>
-                      <p className="text-base font-bold text-gray-900">351 663 9967</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  onClick={() => {
-                    setContactoSeleccionado(MOCK_CONTACTOS[4]);
-                    setMostrarModalRegistrarAccion(true);
-                  }}
-                  className="bg-gray-50 rounded-xl shadow-sm hover:shadow-xl hover:bg-orange-50 hover:border-l-8 transition-all border-l-4 border-orange-500 p-4 cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Instagram</p>
-                      <p className="text-base font-bold text-gray-900">@deudor_ar</p>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
