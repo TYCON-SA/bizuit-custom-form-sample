@@ -1,67 +1,95 @@
 # Automatic Semantic Versioning
 
-This repository uses **automatic semantic versioning** for deployment packages. The version number is automatically incremented based on your commit message, following the [Conventional Commits](https://www.conventionalcommits.org/) specification.
+This repository uses **automatic semantic versioning** for deployment packages. The version number is automatically incremented on every build, ensuring consistent and traceable versioning.
 
-## How It Works
+## 🎯 How It Works
 
-### Automatic Version Increment
+### Automatic Version Increment (Simple PATCH Increment)
 
-When you push to `main` or `release/*` branches, the workflow automatically:
+**Simplificado:** Cada build incrementa automáticamente la versión **PATCH** del formulario.
 
-1. Reads the last git tag (e.g., `v1.2.3`)
-2. Analyzes your commit message to determine the type of change
-3. Increments the version accordingly
-4. Creates a new git tag with the new version
-5. Generates deployment package with the new version
+When you push to `main` or `release/*` branches, the CI/CD pipeline (GitHub Actions or Azure DevOps) automatically:
 
-### Version Bump Rules
+1. **Reads** the previous version from `package.json` in the last commit
+2. **Increments** the PATCH version (e.g., `1.0.0` → `1.0.1`)
+3. **Updates** `package.json` with the new version
+4. **Commits** the updated `package.json` back to the repository
+5. **Generates** deployment package with the new version
 
-The version bump type is determined by your **commit message prefix**:
+**Example sequence:**
+```
+Push 1: 1.0.0 → 1.0.1
+Push 2: 1.0.1 → 1.0.2
+Push 3: 1.0.2 → 1.0.3
+...and so on
+```
 
-| Commit Message Prefix | Version Bump | Example |
-|----------------------|--------------|---------|
-| `major:` or `BREAKING CHANGE:` | **Major** (X.0.0) | `v1.2.3` → `v2.0.0` |
-| `feat:` or `feature:` or `minor:` | **Minor** (x.Y.0) | `v1.2.3` → `v1.3.0` |
-| `fix:`, `chore:`, `docs:`, etc. | **Patch** (x.y.Z) | `v1.2.3` → `v1.2.4` |
+### ⚙️ Dual CI/CD Support
+
+This versioning system works identically in **both** CI/CD platforms:
+
+- ✅ **GitHub Actions** (`.github/workflows/build-deployment-package.yml`)
+- ✅ **Azure DevOps Pipelines** (`azure-pipelines.yml`)
+
+Both pipelines use the **same logic** for version increment, ensuring consistency regardless of which platform you use.
+
+### 🔢 Version Bump Rules (Simplified)
+
+**Current implementation:** All changes increment **PATCH** version only.
+
+| Trigger | Version Bump | Example |
+|---------|--------------|---------|
+| Any push to `main` | **Patch** (x.y.Z) | `v1.0.0` → `v1.0.1` |
+| Any push with form changes | **Patch** (x.y.Z) | `v1.0.1` → `v1.0.2` |
 
 ### Commit Message Examples
 
-#### Patch Version (Bug fixes, small changes)
+**Nota:** Aunque el sistema actualmente incrementa solo PATCH, es buena práctica usar conventional commits para documentar el tipo de cambio:
+
 ```bash
+# Bug fixes
 git commit -m "fix: corregir validación de fechas en formulario"
+
+# New features
+git commit -m "feat: agregar nuevo campo de selección múltiple"
+
+# Maintenance
 git commit -m "chore: actualizar dependencias"
+
+# Documentation
 git commit -m "docs: mejorar documentación de API"
 ```
-Result: `v1.2.3` → `v1.2.4`
 
-#### Minor Version (New features, backward-compatible)
+**Todas resultan en:** `v1.0.0` → `v1.0.1` (PATCH increment)
+
+## 🎛️ Manual Version Override (Advanced)
+
+Si necesitas cambiar MAJOR o MINOR versiones (ej: para breaking changes), debes hacerlo manualmente:
+
+### Opción 1: Editar package.json directamente
+
 ```bash
-git commit -m "feat: agregar nuevo campo de selección múltiple"
-git commit -m "feature: implementar carga de archivos PDF"
-git commit -m "minor: nuevo componente de calendario"
+# Editar package.json manualmente
+nano form-template/package.json
+# Cambiar "version": "1.0.5" → "2.0.0"
+
+git add form-template/package.json
+git commit -m "chore: bump to v2.0.0 for breaking changes"
+git push
+
+# El próximo auto-increment será: 2.0.0 → 2.0.1
 ```
-Result: `v1.2.3` → `v1.3.0`
 
-#### Major Version (Breaking changes)
-```bash
-git commit -m "major: cambiar estructura de datos del formulario"
-git commit -m "BREAKING CHANGE: eliminar compatibilidad con API v1"
-```
-Result: `v1.2.3` → `v2.0.0`
+### Opción 2: Trigger manual del workflow
 
-## Manual Version Override
-
-You can still specify the version manually by triggering the workflow from GitHub Actions UI:
-
+**GitHub Actions:**
 1. Go to **Actions** → **Build Deployment Package (Offline)**
 2. Click **Run workflow**
-3. Enter custom version (e.g., `2.5.0`)
-4. Optionally add release notes
+3. El workflow construirá con la versión actual del `package.json`
 
-This will:
-- Use your specified version (no auto-increment)
-- Create a GitHub Release with release notes
-- Skip automatic tag creation (manual trigger)
+**Azure DevOps:**
+1. Go to **Pipelines** → **Run pipeline**
+2. El pipeline construirá con la versión actual del `package.json`
 
 ## Initial Setup
 

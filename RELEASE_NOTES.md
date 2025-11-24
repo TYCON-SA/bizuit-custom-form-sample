@@ -6,29 +6,21 @@ Este documento explica cómo agregar notas de versión (release notes) a tus for
 
 Las release notes son descripciones de los cambios realizados en cada versión de un formulario. Aparecen en el panel de administración cuando visualizas el historial de versiones, ayudando a los administradores a entender qué cambió en cada actualización.
 
+## ⚙️ Versionado Automático
+
+**IMPORTANTE:** El versionado de formularios es **completamente automático**. No necesitas especificar versiones manualmente.
+
+- Cada push a `main` incrementa automáticamente la versión PATCH (ej: 1.0.0 → 1.0.1)
+- El sistema lee la versión anterior del `package.json` y la incrementa
+- Aplica tanto para GitHub Actions como para Azure DevOps pipelines
+
+**Ver detalles completos:** [VERSIONING.md](VERSIONING.md)
+
 ## 🚀 Métodos para Agregar Release Notes
 
-### Método 1: Workflow Manual (Recomendado)
+### Método 1: Mensaje de Commit (Recomendado)
 
-Cuando ejecutas el workflow manualmente desde GitHub Actions:
-
-1. Ve a **Actions** → **Build Deployment Package**
-2. Haz clic en **Run workflow**
-3. Completa los campos:
-   - **Version**: `1.2.0` (ejemplo)
-   - **Release notes**: Escribe tus cambios aquí
-
-**Ejemplo de release notes:**
-```
-Nueva funcionalidad de aprobación multi-nivel
-- Agregado soporte para 3 niveles de aprobación
-- Mejorada validación de campos obligatorios
-- Corregido bug en cálculo de totales
-```
-
-### Método 2: Mensaje de Commit (Automático)
-
-Si haces un push directamente, el workflow extraerá las release notes del mensaje del commit.
+El método más simple es escribir un buen mensaje de commit. El workflow lo extraerá automáticamente como release notes.
 
 #### Formato Conventional Commits (Recomendado)
 
@@ -59,11 +51,24 @@ git commit -m "Mejoras en formulario de aprobación de gastos
 - Bug fix en totales"
 ```
 
+### Método 2: Workflow Manual (GitHub Actions / Azure DevOps)
+
+Si ejecutas el workflow manualmente, puedes especificar release notes en el campo correspondiente.
+
+**GitHub Actions:**
+1. Ve a **Actions** → **Build Deployment Package**
+2. Haz clic en **Run workflow**
+3. Completa el campo **Release notes** (opcional)
+
+**Azure DevOps:**
+1. Ve a **Pipelines** → **Run pipeline**
+2. Completa el campo **Release notes** (opcional)
+
 ### Método 3: Por Defecto (Automático)
 
-Si no se proporciona release notes ni por input manual ni por commit, se usará:
+Si no se proporciona release notes (ni por commit ni por input manual), se usará:
 ```
-Version X.X.X - Build automático
+Build automático - Pipeline #{número}
 ```
 
 ## 📋 Buenas Prácticas
@@ -154,17 +159,85 @@ Las release notes aparecen en el **Panel de Administración → Gestión de Form
 └─────────────────────────────────────────────────┘
 ```
 
+## ⚙️ Configuración del package.json
+
+El archivo `package.json` de cada formulario contiene metadata que se usa en el deployment. Aquí están las **reglas importantes**:
+
+### Estructura Requerida
+
+```json
+{
+  "name": "form-template",
+  "version": "1.0.0",
+  "description": "Descripción del formulario",
+  "author": "NombreAutor",
+  "scripts": {
+    "build": "node ../build-form.js"
+  }
+}
+```
+
+### ⚠️ Restricciones Importantes
+
+1. **`author` NO DEBE contener espacios**
+   ```json
+   ❌ "author": "John Doe"        // INCORRECTO
+   ✅ "author": "JohnDoe"          // CORRECTO
+   ✅ "author": "John_Doe"         // CORRECTO
+   ✅ "author": "Bizuit Team"      // Aceptable (se convierte a BizuitTeam)
+   ```
+
+2. **`name` debe ser un identificador válido**
+   - Solo letras minúsculas, números, guiones
+   - Sin espacios
+   - Ejemplo: `form-template`, `aprobacion-gastos`, `solicitud-vacaciones`
+
+3. **`version` es auto-gestionada**
+   - **NO edites manualmente** (salvo para cambios MAJOR/MINOR)
+   - El workflow actualiza automáticamente el PATCH
+   - Formato: `MAJOR.MINOR.PATCH` (ej: `1.0.0`)
+
+4. **`description` y `author` aparecen en el panel admin**
+   - Escribe descripciones claras y concisas
+   - Se muestran en la lista de formularios
+
+### Ejemplo Completo
+
+```json
+{
+  "name": "aprobacion-gastos",
+  "version": "1.2.5",
+  "description": "Formulario de aprobación de gastos empresariales",
+  "author": "BizuitTeam",
+  "scripts": {
+    "build": "node ../build-form.js",
+    "build:dev": "node ../build-form.js --dev"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.3.0"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}
+```
+
 ## 🔄 Workflow Completo
 
 1. **Desarrollo**: Haces cambios en tu formulario
 2. **Commit**: Usas conventional commits o mensaje descriptivo
-3. **Push**: GitHub Actions se ejecuta automáticamente
-4. **Build**: Se genera el deployment package con release notes
-5. **Deploy**: Subes el ZIP al panel admin
-6. **Historial**: Las release notes aparecen en el panel de versiones
+3. **Push**: GitHub Actions/Azure DevOps se ejecuta automáticamente
+4. **Auto-version**: El workflow incrementa la versión en `package.json`
+5. **Build**: Se genera el deployment package con release notes
+6. **Deploy**: Subes el ZIP al panel admin
+7. **Historial**: Las release notes aparecen en el panel de versiones
 
 ## 📚 Recursos Adicionales
 
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [Keep a Changelog](https://keepachangelog.com/)
 - [Semantic Versioning](https://semver.org/)
+- [VERSIONING.md](VERSIONING.md) - Detalles completos del sistema de versionado
