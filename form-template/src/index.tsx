@@ -26,9 +26,9 @@ import { BizuitSDK } from '@tyconsa/bizuit-form-sdk';
 // ============================================================================
 
 const SDK_CONFIG = {
-  // TODO: Update with your Dashboard API URL
-  // Example: 'https://test.bizuit.com/yourTenantBizuitDashboardapi/api/'
-  defaultApiUrl: 'https://test.bizuit.com/arielschBizuitDashboardapi/api/',
+  // TODO: Update with your Dashboard API URL (WITHOUT trailing slash)
+  // Example: 'https://test.bizuit.com/yourTenantBizuitDashboardapi/api'
+  defaultApiUrl: '',
 
   // TODO: Update with your process name
   processName: 'YourProcessName'
@@ -68,16 +68,18 @@ interface DashboardParams {
 
 export default function FormTemplate({ dashboardParams }: { dashboardParams?: DashboardParams }) {
   // Get API URL from dashboardParams or use default
+  // Priority: 1) apiUrl (from FormLoader), 2) devApiUrl (dev override), 3) default
   const apiUrl = dashboardParams?.apiUrl ||
                  dashboardParams?.devApiUrl ||
                  SDK_CONFIG.defaultApiUrl;
 
-  // Get credentials for authentication
-  const username = dashboardParams?.userName || dashboardParams?.devUsername || '';
+  // Get credentials for authentication (prioritize dev credentials)
+  const username = dashboardParams?.devUsername || dashboardParams?.userName || '';
   const password = dashboardParams?.devPassword || '';
 
   // State
   const [sdk] = useState(() => new BizuitSDK({
+    apiUrl,
     timeout: 30000,
     retries: 3
   }));
@@ -98,48 +100,62 @@ export default function FormTemplate({ dashboardParams }: { dashboardParams?: Da
       setLoading(true);
       setError(null);
 
-      console.log('[Form Template] Initializing SDK...');
+      console.log('[Form Template] Loading data...');
       console.log('[Form Template] API URL:', apiUrl);
       console.log('[Form Template] Username:', username);
 
-      // 1. Authenticate with Dashboard API
-      const loginResult = await sdk.auth.login({
-        username: username,
-        password: password,
-        baseURL: apiUrl
-      });
+      // ========================================================================
+      // EXAMPLE: Authentication and Process Call (COMMENTED OUT)
+      // ========================================================================
+      // Uncomment this section when you have a real process to call
+      //
+      // // 1. Authenticate with Dashboard API
+      // const loginResult = await sdk.auth.login({
+      //   username,
+      //   password
+      // });
+      //
+      // const token = loginResult.Token;
+      // console.log('[Form Template] ✅ Authenticated successfully');
+      //
+      // // 2. Call your process
+      // const result = await sdk.forms.startProcess({
+      //   processName: SDK_CONFIG.processName,
+      //   additionalParameters: sdk.forms.createParameters([
+      //     { name: 'pUserName', value: username },
+      //     { name: 'pParameter1', value: 'value1' }
+      //   ]),
+      //   token
+      // });
+      //
+      // console.log('[Form Template] ✅ Process response:', result);
+      //
+      // // 3. Parse response data
+      // const items: ExampleItem[] = result.parameters
+      //   .filter(p => p.name.startsWith('item_'))
+      //   .map((p, index) => ({
+      //     id: index + 1,
+      //     name: p.value?.name || `Item ${index + 1}`,
+      //     status: p.value?.status || 'Active',
+      //     date: p.value?.date || new Date().toISOString().split('T')[0],
+      //     amount: p.value?.amount || 0
+      //   }));
+      //
+      // setData(items);
+      // ========================================================================
 
-      const token = loginResult.Token;
+      // FOR DEMO: Load mock data (remove when using real process)
+      console.log('[Form Template] Loading mock data for demo...');
+      const mockItems: ExampleItem[] = [
+        { id: 1, name: 'Example Item 1', status: 'Active', date: '2025-11-23', amount: 1500.50 },
+        { id: 2, name: 'Example Item 2', status: 'Active', date: '2025-11-22', amount: 2300.75 },
+        { id: 3, name: 'Example Item 3', status: 'Inactive', date: '2025-11-21', amount: 890.00 },
+        { id: 4, name: 'Example Item 4', status: 'Active', date: '2025-11-20', amount: 4250.00 },
+        { id: 5, name: 'Example Item 5', status: 'Active', date: '2025-11-19', amount: 750.25 },
+      ];
 
-      console.log('[Form Template] ✅ Authenticated successfully');
-
-      // 2. Call your process
-      // TODO: Update with your actual process parameters
-      const result = await sdk.process.raiseEvent({
-        processName: SDK_CONFIG.processName,
-        activityName: 'Start',
-        additionalParameters: sdk.process.createParameters([
-          { name: 'pUserName', value: username }
-        ])
-      }, [], token);
-
-      console.log('[Form Template] ✅ Process response:', result);
-
-      // 3. Parse response data
-      // TODO: Update with your actual data parsing logic
-      const items: ExampleItem[] = result.parameters
-        .filter(p => p.name.startsWith('item_'))
-        .map((p, index) => ({
-          id: index + 1,
-          name: p.value?.name || `Item ${index + 1}`,
-          status: p.value?.status || 'Active',
-          date: p.value?.date || new Date().toISOString().split('T')[0],
-          amount: p.value?.amount || Math.floor(Math.random() * 10000)
-        }));
-
-      setData(items);
-
-      console.log('[Form Template] ✅ Data loaded:', items.length, 'items');
+      setData(mockItems);
+      console.log('[Form Template] ✅ Mock data loaded:', mockItems.length, 'items');
 
     } catch (err: any) {
       console.error('[Form Template] ❌ Error loading data:', err);

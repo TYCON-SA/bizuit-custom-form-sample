@@ -3,66 +3,105 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Form Template - Development</title>
+  <title>Form Template - Dev Mode</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              DEFAULT: 'hsl(24.6, 95%, 53.1%)',
+              foreground: 'hsl(210, 40%, 98%)',
+            },
+            destructive: {
+              DEFAULT: 'hsl(0, 84.2%, 60.2%)',
+              foreground: 'hsl(210, 40%, 98%)',
+            },
+            secondary: {
+              DEFAULT: 'hsl(210, 40%, 96.1%)',
+              foreground: 'hsl(222.2, 47.4%, 11.2%)',
+            },
+          }
+        }
+      }
+    }
+  </script>
+
   <style>
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-        sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    #root {
-      min-height: 100vh;
-    }
-    .dev-banner {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 12px 20px;
-      text-align: center;
-      font-weight: 600;
-      font-size: 14px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    /* Bizuit Theme CSS Variables - Orange Theme */
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 222.2 84% 4.9%;
+      --card: 0 0% 100%;
+      --card-foreground: 222.2 84% 4.9%;
+      --popover: 0 0% 100%;
+      --popover-foreground: 222.2 84% 4.9%;
+      --primary: 24.6 95% 53.1%;
+      --primary-foreground: 210 40% 98%;
+      --secondary: 210 40% 96.1%;
+      --secondary-foreground: 222.2 47.4% 11.2%;
+      --muted: 210 40% 96.1%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --accent: 210 40% 96.1%;
+      --accent-foreground: 222.2 47.4% 11.2%;
+      --destructive: 0 84.2% 60.2%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 214.3 31.8% 91.4%;
+      --input: 214.3 31.8% 91.4%;
+      --ring: 24.6 95% 53.1%;
+      --radius: 0.5rem;
     }
   </style>
+
+  <!-- React & ReactDOM from CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 </head>
 <body>
-  <!-- Development Mode Banner -->
-  <div class="dev-banner">
-    🚀 DEVELOPMENT MODE - Form Template v1.0.0
-  </div>
-
-  <!-- React App Root -->
   <div id="root"></div>
 
-  <!-- React Dependencies (CDN) -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Load dev credentials (gitignored file) -->
+  <script type="module" src="./dev-credentials.js"></script>
 
-  <!-- Bizuit SDK and UI Components (CDN) -->
-  <script src="https://unpkg.com/@tyconsa/bizuit-form-sdk@2.0.0/dist/index.umd.js"></script>
-  <script src="https://unpkg.com/@tyconsa/bizuit-ui-components@1.7.0/dist/index.umd.js"></script>
-
-  <!-- Your Form Bundle (Fat Bundle with all your code) -->
+  <!-- Load the built form as ES module -->
   <script type="module">
-    import FormTemplate from './form.js';
+    // Force light theme and orange color
+    localStorage.setItem('bizuit-ui-theme', 'light');
+    localStorage.setItem('bizuit-ui-color-theme', 'orange');
 
-    // Mock Dashboard params for development
+    // Import dev credentials (from dev-credentials.js)
+    import { DEV_CREDENTIALS } from './dev-credentials.js';
+
+    // Dynamic import with cache buster to always load latest version
+    const cacheBuster = Date.now();
+    const formModule = await import('./form.dev.js?v=' + cacheBuster);
+    const FormTemplate = formModule.default;
+
+    // Mount the form with mock dashboard params
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+
+    // Mock dashboard parameters for testing
+    // In dev mode: pass devUsername/devPassword/devApiUrl
+    // In production: Dashboard/FormLoader provides token and apiUrl
     const mockDashboardParams = {
       userName: 'Developer',
       instanceId: 'dev-instance-001',
-      devUsername: 'dev@example.com',
-      devPassword: 'dev-password',
-      devApiUrl: 'https://test.bizuit.com/arielschBizuitDashboardapi/api/'
+      eventName: 'TestProcess',
+      activityName: 'Start',
+      // Dev credentials (from dev-credentials.js)
+      devUsername: DEV_CREDENTIALS.username,
+      devPassword: DEV_CREDENTIALS.password,
+      devApiUrl: DEV_CREDENTIALS.apiUrl
     };
 
-    // Render form
-    const container = document.getElementById('root');
-    const root = ReactDOM.createRoot(container);
-    root.render(
-      React.createElement(FormTemplate, { dashboardParams: mockDashboardParams })
-    );
+    // Render the form
+    root.render(React.createElement(FormTemplate, {
+      dashboardParams: mockDashboardParams
+    }));
 
     console.log('✅ Form Template loaded in development mode');
     console.log('📦 Dashboard Params:', mockDashboardParams);

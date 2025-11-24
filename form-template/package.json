@@ -6,7 +6,9 @@
   "license": "ISC",
   "type": "module",
   "scripts": {
-    "build": "node ../build-form.js ./src/index.tsx ./dist/form.js form-template"
+    "build": "node ../build-form.js ./src/index.tsx ./dist/form.js form-template",
+    "build:all": "npm run build && npm run build:dev",
+    "build:dev": "node ../build-form-dev.js ./src/index.tsx ./dist/form.dev.js form-template"
   },
   "dependencies": {
     "@tyconsa/bizuit-form-sdk": "^2.0.0",

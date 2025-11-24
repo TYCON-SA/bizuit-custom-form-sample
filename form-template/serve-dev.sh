@@ -27,12 +27,12 @@ echo "   - Line 55: devUsername (your Dashboard email)"
 echo "   - Line 56: devPassword (your Dashboard password)"
 echo "   - Line 57: devApiUrl (your tenant API URL)"
 echo ""
-echo "🌐 Starting HTTP server on port 8080..."
+echo "🌐 Starting HTTP server on port 8081..."
 echo ""
-echo "   URL: http://localhost:8080/dev.html"
+echo "   URL: http://localhost:8081/dev.html"
 echo ""
 echo "Press Ctrl+C to stop the server"
 echo ""
 
 cd dist
-python3 -m http.server 8080
+python3 -m http.server 8081

@@ -535,6 +535,9 @@ function RecubizGestionFormInner({ dashboardParams }: FormProps) {
         // Check if token comes from Dashboard
         if (dashboardParams?.token) {
           console.log('✅ Using Dashboard token');
+          console.log('[DEBUG] Token value:', dashboardParams.token);
+          console.log('[DEBUG] Token length:', dashboardParams.token.length);
+          console.log('[DEBUG] Has % characters:', dashboardParams.token.includes('%'));
           token = dashboardParams.token;
           setAuthToken(token);
         }
