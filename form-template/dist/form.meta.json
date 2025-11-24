@@ -1,8 +1,8 @@
 {
   "formName": "form-template",
-  "version": "1.0.0",
-  "builtAt": "2025-11-24T00:01:39.299Z",
-  "sizeBytes": 9373,
+  "version": "1.0.1",
+  "builtAt": "2025-11-24T00:07:21.006Z",
+  "sizeBytes": 9399,
   "entryPoint": "./src/index.tsx",
   "externals": [
     "react",

@@ -67,13 +67,6 @@ interface DashboardParams {
 // ============================================================================
 
 export default function FormTemplate({ dashboardParams }: { dashboardParams?: DashboardParams }) {
-  // State
-  const [sdk] = useState(() => new BizuitSDK());
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<ExampleItem[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
-
   // Get API URL from dashboardParams or use default
   const apiUrl = dashboardParams?.apiUrl ||
                  dashboardParams?.devApiUrl ||
@@ -82,6 +75,16 @@ export default function FormTemplate({ dashboardParams }: { dashboardParams?: Da
   // Get credentials for authentication
   const username = dashboardParams?.userName || dashboardParams?.devUsername || '';
   const password = dashboardParams?.devPassword || '';
+
+  // State
+  const [sdk] = useState(() => new BizuitSDK({
+    timeout: 30000,
+    retries: 3
+  }));
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<ExampleItem[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
   /**
    * Initialize SDK and load data from process

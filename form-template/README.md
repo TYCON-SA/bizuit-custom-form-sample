@@ -523,6 +523,55 @@ npm install
 # Check BizuitThemeProvider is wrapping everything
 ```
 
+### "Invalid author format" on Upload
+
+```bash
+# Error: Invalid author format: Tycon S.A.
+
+# Cause: Backend validation doesn't allow spaces in author field
+
+# Fix: Edit package.json
+{
+  "author": "Tyconsa"  // ✅ No spaces
+}
+
+# NOT:
+{
+  "author": "Tycon SA"     // ❌ Has space
+  "author": "Tycon S.A."   // ❌ Has space and dot
+}
+
+# Valid alternatives:
+{
+  "author": "Tycon-SA"     // ✅ Hyphen
+  "author": "Tycon_SA"     // ✅ Underscore
+  "author": "john.doe"     // ✅ Dot allowed (no spaces)
+}
+```
+
+---
+
+## 📋 Validation Rules Reference
+
+### package.json Field Validation
+
+The backend validates these fields with strict regex patterns:
+
+| Field | Regex | Allows Spaces? | Example Valid | Example Invalid |
+|-------|-------|----------------|---------------|-----------------|
+| **author** | `^[a-zA-Z0-9._@-]+$` | ❌ No | `Tyconsa`, `john.doe` | `Tycon SA` |
+| **name** | (flexible) | ✅ Yes (in scope) | `@tyconsa/my-form` | - |
+| **version** | `^\d+\.\d+\.\d+$` | ❌ No | `1.0.5` | `v1.0.0`, `1.0` |
+| **description** | (no validation) | ✅ Yes | Any text | - |
+
+**Key Rules**:
+- ⚠️ **author**: NO SPACES - use `Tyconsa`, `John-Doe`, or `admin@bizuit`
+- ⚠️ **version**: Semantic versioning (MAJOR.MINOR.PATCH)
+- ✅ **description**: Free text, any format
+
+**Why no spaces in author?**
+Security validation (SQL injection, XSS, command injection prevention)
+
 ---
 
 ## 📞 Need Help?
