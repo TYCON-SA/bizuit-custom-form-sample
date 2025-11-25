@@ -69,7 +69,7 @@ bizuit-custom-form-sample/
 ### 1. Clonar
 
 ```bash
-git clone https://github.com/your-org/bizuit-custom-form-sample.git
+git clone https://github.com/TYCON-SA/bizuit-custom-form-sample.git
 cd bizuit-custom-form-sample
 ```
 
@@ -84,7 +84,21 @@ cd form-template
 npm install
 ```
 
-### 3. Testing Rápido con Fat Bundle
+### 3. Configurar Credenciales de Desarrollo
+
+⚠️ **IMPORTANTE:** Configura las credenciales ANTES de probar el form.
+
+```bash
+# Crear archivo de credenciales
+cp ../runtime-app/dev-credentials.js.example ../runtime-app/dev-credentials.js
+
+# Editar con tus credenciales de Bizuit
+nano ../runtime-app/dev-credentials.js
+```
+
+Ver [DEVELOPMENT.md#setup-de-credenciales-de-desarrollo](DEVELOPMENT.md#setup-de-credenciales-de-desarrollo) para configuración detallada.
+
+### 4. Testing Rápido con Fat Bundle
 
 ```bash
 # Compilar fat bundle
@@ -165,28 +179,25 @@ open http://localhost:8080/dev.html
 
 ### Testing en Runtime (Producción-like)
 
-Para testing completo con SDK calls y database, necesitas:
+Para testing completo con SDK calls y database (credenciales ya configuradas en paso 3):
 
-1. **Configurar dev credentials** en `runtime-app/dev-credentials.js`
-   - Ver [DEVELOPMENT.md#setup-de-credenciales-de-desarrollo](DEVELOPMENT.md#setup-de-credenciales-de-desarrollo)
-
-2. **Habilitar dev mode** en `runtime-app/.env.local`:
+1. **Habilitar dev mode** en `runtime-app/.env.local`:
    ```env
    ALLOW_DEV_MODE=true
    ```
 
-3. **Start runtime services:**
+2. **Start runtime services:**
    ```bash
    cd ../../  # Volver al root del proyecto principal
    ./start-all.sh
    ```
 
-4. **Upload form via admin:**
+3. **Upload form via admin:**
    ```
    http://localhost:3001/admin/upload-forms
    ```
 
-5. **Test form:**
+4. **Test form:**
    ```
    http://localhost:3001/form/mi-nuevo-form
    ```
@@ -272,7 +283,7 @@ git push
 
 **Descargar artifacts:**
 
-1. Ir a: https://github.com/your-org/bizuit-custom-form-sample/actions
+1. Ir a: https://github.com/TYCON-SA/bizuit-custom-form-sample/actions
 2. Click en el workflow run exitoso
 3. Scroll down a "Artifacts"
 4. Download ZIP del form deseado
