@@ -25,7 +25,7 @@ Guía completa para desarrollar, testear y deployar custom forms en el ecosistem
 ### 1. Clonar el Repositorio
 
 ```bash
-git clone https://github.com/arielsch74/bizuit-custom-form-sample.git
+git clone https://github.com/{your-org}/bizuit-custom-form-sample.git
 cd bizuit-custom-form-sample
 ```
 
@@ -482,7 +482,7 @@ npm run build
 
 ### Descargar Artifacts
 
-1. Ir a: https://github.com/arielsch74/bizuit-custom-form-sample/actions
+1. Ir a: https://github.com/{your-org}/bizuit-custom-form-sample/actions
 2. Click en el workflow run exitoso
 3. Scroll down a "Artifacts"
 4. Download ZIP del form deseado
@@ -876,7 +876,7 @@ grep -A 5 "external:" ../build-form.js
 
 1. Verificar workflow usa `artifact-staging/` (no `.artifact-staging/`)
 2. Verificar step "Stage new ZIPs for upload" ejecuta correctamente
-3. Ver logs: https://github.com/arielsch74/bizuit-custom-form-sample/actions
+3. Ver logs: https://github.com/{your-org}/bizuit-custom-form-sample/actions
 
 ### Deployment en entorno no refleja cambios
 
@@ -917,11 +917,11 @@ ls -la custom-forms/runtime-app/public/forms/recubiz-gestion/
 
 ## 📚 Referencias
 
-- **Repositorio:** https://github.com/arielsch74/bizuit-custom-form-sample
+- **Repositorio:** https://github.com/{your-org}/bizuit-custom-form-sample
 - **Workflow:** `.github/workflows/build-deployment-package.yml`
 - **SDK Docs:** `@tyconsa/bizuit-form-sdk` README
 - **UI Components:** `@tyconsa/bizuit-ui-components` README
-- **Versioning:** `VERSIONING.md`
+- **Versioning:** See [README.md](README.md#deployment--versioning)
 
 ---
 

@@ -34,7 +34,7 @@ test.bizuit.com/
 
 #### Opción A: Download desde GitHub Actions (Recomendado)
 
-1. Ir a: https://github.com/arielsch74/bizuit-custom-form-sample/actions
+1. Ir a: https://github.com/{your-org}/bizuit-custom-form-sample/actions
 2. Click en el workflow run más reciente (debe estar ✅ exitoso)
 3. Scroll down a "Artifacts"
 4. Download el ZIP del form deseado:
@@ -236,7 +236,7 @@ git checkout dev
 #    - Sube artifact a GitHub Actions
 
 # 7. Download artifact de GitHub Actions
-# https://github.com/arielsch74/bizuit-custom-form-sample/actions
+# https://github.com/{your-org}/bizuit-custom-form-sample/actions
 
 # 8. Upload via admin panel a cada entorno deseado
 # arielsch: test.bizuit.com/arielschBIZUITCustomForms/admin/upload-forms
@@ -543,7 +543,7 @@ curl https://test.bizuit.com/clienteXBIZUITCustomForms/forms/recubiz-gestion/for
 
 ```bash
 # Download artifact antiguo de GitHub
-# https://github.com/arielsch74/bizuit-custom-form-sample/actions
+# https://github.com/{your-org}/bizuit-custom-form-sample/actions
 
 # Upload via admin panel
 # El sistema reemplaza con la versión antigua
@@ -852,12 +852,12 @@ ls -la .next/standalone/
 
 ## 🔗 Referencias
 
-- **Repositorio:** https://github.com/arielsch74/bizuit-custom-form-sample
-- **GitHub Actions:** https://github.com/arielsch74/bizuit-custom-form-sample/actions
+- **Repositorio:** https://github.com/{your-org}/bizuit-custom-form-sample
+- **GitHub Actions:** https://github.com/{your-org}/bizuit-custom-form-sample/actions
 - **SDK npm:** https://www.npmjs.com/package/@tyconsa/bizuit-form-sdk
 - **UI Components npm:** https://www.npmjs.com/package/@tyconsa/bizuit-ui-components
 - **Guía de Desarrollo:** [DEVELOPMENT.md](DEVELOPMENT.md)
-- **Versioning:** [VERSIONING.md](VERSIONING.md)
+- **Versioning:** See [README.md](README.md#deployment--versioning)
 
 ---
 

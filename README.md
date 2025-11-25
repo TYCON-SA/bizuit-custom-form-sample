@@ -19,13 +19,12 @@ Este repositorio contiene documentación completa para desarrollar, testear y de
 
 ### 🎯 Para Empezar
 
-- **[form-template/README.md](form-template/README.md)** - Template listo para usar con guía de customización completa
+- **[FORM_DEVELOPMENT_GUIDE.md](FORM_DEVELOPMENT_GUIDE.md)** - Guía completa para crear y desarrollar custom forms (basada en form-template)
 
 ### 📖 Guías Detalladas
 
 - **[DEVELOPMENT.md](DEVELOPMENT.md)** - Desarrollo local, testing con dev.html y fat bundle, debugging
 - **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Setup de entornos, deployment a producción, troubleshooting
-- **[VERSIONING.md](VERSIONING.md)** - Sistema de versionado automático por form
 
 ### 📦 Otros Recursos
 
@@ -49,8 +48,7 @@ bizuit-custom-form-sample/
 │   │   ├── form.js                        # Compiled bundle
 │   │   └── dev.html                       # Test page
 │   ├── upload/                            # Deployment ZIPs (generated)
-│   ├── package.json
-│   └── README.md                          # Template documentation
+│   └── package.json
 │
 ├── recubiz-gestion/                       # Example form
 │   ├── src/
