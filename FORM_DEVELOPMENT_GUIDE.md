@@ -311,10 +311,10 @@ cp dev-credentials.example.js dev-credentials.js
 nano dev-credentials.js
 ```
 
-**Tenant name examples**:
-- `arielsch` → `arielschBizuitDashboardapi`
-- `recubiz` → `recubizBizuitDashboardapi`
+**Tenant name pattern**:
 - Pattern: `{tenant}BizuitDashboardapi/api/`
+- Example: `clientXBizuitDashboardapi`
+- Replace `clientX` with your actual tenant name
 
 **IMPORTANT**: This file is in `.gitignore` and must be created locally for each form you develop.
 

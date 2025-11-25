@@ -1,6 +1,6 @@
 # Guía de Deployment - Custom Forms a Entornos
 
-Pasos completos para deployar custom forms a entornos Bizuit BPM (arielsch, recubiz, etc.)
+Pasos completos para deployar custom forms a entornos Bizuit BPM (clientX, clientY, etc.)
 
 ## 📋 Arquitectura de Entornos
 
@@ -8,12 +8,12 @@ Pasos completos para deployar custom forms a entornos Bizuit BPM (arielsch, recu
 
 ```
 test.bizuit.com/
-├── arielschBIZUITCustomForms/
+├── clientXBIZUITCustomForms/
 │   ├── Runtime App (Next.js)   → Puerto 3001, IIS Reverse Proxy
 │   ├── Backend API (FastAPI)   → Puerto 8000, IIS Reverse Proxy
 │   └── Forms Storage           → /public/forms/{form-name}/form.js
 │
-└── recubizBIZUITCustomForms/
+└── clientYBIZUITCustomForms/
     ├── Runtime App (Next.js)   → Puerto 3002, IIS Reverse Proxy
     ├── Backend API (FastAPI)   → Puerto 8001, IIS Reverse Proxy
     └── Forms Storage           → /public/forms/{form-name}/form.js
@@ -23,8 +23,8 @@ test.bizuit.com/
 
 | Entorno | Runtime App | Backend API | Admin Panel |
 |---------|------------|-------------|-------------|
-| **arielsch** | `test.bizuit.com/arielschBIZUITCustomForms` | `test.bizuit.com/arielschBIZUITCustomForms/api` | `test.bizuit.com/arielschBIZUITCustomForms/admin` |
-| **recubiz** | `test.bizuit.com/recubizBIZUITCustomForms` | `test.bizuit.com/recubizBIZUITCustomForms/api` | `test.bizuit.com/recubizBIZUITCustomForms/admin` |
+| **clientX** | `test.bizuit.com/clientXBIZUITCustomForms` | `test.bizuit.com/clientXBIZUITCustomForms/api` | `test.bizuit.com/clientXBIZUITCustomForms/admin` |
+| **clientY** | `test.bizuit.com/clientYBIZUITCustomForms` | `test.bizuit.com/clientYBIZUITCustomForms/api` | `test.bizuit.com/clientYBIZUITCustomForms/admin` |
 
 ---
 
@@ -38,17 +38,17 @@ test.bizuit.com/
 2. Click en el workflow run más reciente (debe estar ✅ exitoso)
 3. Scroll down a "Artifacts"
 4. Download el ZIP del form deseado:
-   - `recubiz-gestion-deployment-1.0.8-abc1234`
-   - `sample-form-2-deployment-1.0.13-abc1234`
+   - `example-form-deployment-1.0.8-abc1234`
+   - `another-form-deployment-1.0.13-abc1234`
 
 #### Opción B: Build Local
 
 ```bash
-cd recubiz-gestion
+cd example-form
 npm run build
 
 # Crear ZIP manualmente (si es necesario)
-zip -r recubiz-gestion-deployment-local.zip \
+zip -r example-form-deployment-local.zip \
   dist/form.js \
   dist/form.js.map \
   dist/form.meta.json
@@ -59,7 +59,7 @@ zip -r recubiz-gestion-deployment-local.zip \
 **Descomprimir para inspeccionar:**
 
 ```bash
-unzip recubiz-gestion-deployment-1.0.8-abc1234.zip -d temp-inspect
+unzip example-form-deployment-1.0.8-abc1234.zip -d temp-inspect
 tree temp-inspect/
 
 # Estructura esperada:
@@ -67,7 +67,7 @@ tree temp-inspect/
 # ├── manifest.json        # Metadata del deployment
 # ├── VERSION.txt          # Info de build (commit, fecha, etc.)
 # └── forms/
-#     └── recubiz-gestion/
+#     └── example-form/
 #         └── form.js      # Form compilado
 ```
 
@@ -80,11 +80,11 @@ tree temp-inspect/
   "commitHash": "abc1234...",
   "forms": [
     {
-      "formName": "recubiz-gestion",
+      "formName": "example-form",
       "version": "1.0.8",
-      "gitTag": "recubiz-gestion-v1.0.8",
+      "gitTag": "example-form-v1.0.8",
       "sizeBytes": 52097,
-      "path": "forms/recubiz-gestion/form.js"
+      "path": "forms/example-form/form.js"
     }
   ]
 }
@@ -95,47 +95,47 @@ tree temp-inspect/
 #### A. Via Admin Panel (Recomendado)
 
 **URL Admin Panel:**
-- arielsch: https://test.bizuit.com/arielschBIZUITCustomForms/admin/upload-forms
-- recubiz: https://test.bizuit.com/recubizBIZUITCustomForms/admin/upload-forms
+- clientX: https://test.bizuit.com/clientXBIZUITCustomForms/admin/upload-forms
+- clientY: https://test.bizuit.com/clientYBIZUITCustomForms/admin/upload-forms
 
 **Steps:**
 
 1. **Login:** Credenciales con rol `Administrators` o `FormManager`
 2. **Upload:**
    - Click "Upload New Form" o "Upload Form Package"
-   - Seleccionar ZIP: `recubiz-gestion-deployment-1.0.8-abc1234.zip`
+   - Seleccionar ZIP: `example-form-deployment-1.0.8-abc1234.zip`
    - Click "Upload"
 3. **Verificación:**
-   - El sistema muestra: "Form uploaded successfully: recubiz-gestion v1.0.8"
+   - El sistema muestra: "Form uploaded successfully: example-form v1.0.8"
    - La tabla de forms lista el nuevo form
 
 #### B. Via API (Avanzado)
 
 ```bash
 # Endpoint
-POST https://test.bizuit.com/arielschBIZUITCustomForms/api/admin/upload-form
+POST https://test.bizuit.com/clientXBIZUITCustomForms/api/admin/upload-form
 
 # Headers
 Authorization: Bearer {admin-jwt-token}
 Content-Type: multipart/form-data
 
 # Body
-file: recubiz-gestion-deployment-1.0.8-abc1234.zip
+file: example-form-deployment-1.0.8-abc1234.zip
 ```
 
 **Ejemplo con curl:**
 
 ```bash
 # 1. Obtener token admin (requiere login)
-TOKEN=$(curl -X POST https://test.bizuit.com/arielschBIZUITCustomForms/api/admin/login \
+TOKEN=$(curl -X POST https://test.bizuit.com/clientXBIZUITCustomForms/api/admin/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}' \
+  -d '{"username":"admin","password":"your_admin_password"}' \
   | jq -r '.token')
 
 # 2. Upload form
-curl -X POST https://test.bizuit.com/arielschBIZUITCustomForms/api/admin/upload-form \
+curl -X POST https://test.bizuit.com/clientXBIZUITCustomForms/api/admin/upload-form \
   -H "Authorization: Bearer $TOKEN" \
-  -F "file=@recubiz-gestion-deployment-1.0.8-abc1234.zip"
+  -F "file=@example-form-deployment-1.0.8-abc1234.zip"
 ```
 
 ### Paso 4: Verificación Post-Deployment
@@ -145,17 +145,17 @@ curl -X POST https://test.bizuit.com/arielschBIZUITCustomForms/api/admin/upload-
 **URL del form compilado:**
 
 ```bash
-# arielsch
-https://test.bizuit.com/arielschBIZUITCustomForms/forms/recubiz-gestion/form.js
+# clientX
+https://test.bizuit.com/clientXBIZUITCustomForms/forms/example-form/form.js
 
-# recubiz
-https://test.bizuit.com/recubizBIZUITCustomForms/forms/recubiz-gestion/form.js
+# clientY
+https://test.bizuit.com/clientYBIZUITCustomForms/forms/example-form/form.js
 ```
 
 **Test con curl:**
 
 ```bash
-curl -I https://test.bizuit.com/arielschBIZUITCustomForms/forms/recubiz-gestion/form.js
+curl -I https://test.bizuit.com/clientXBIZUITCustomForms/forms/example-form/form.js
 
 # Debe retornar:
 # HTTP/1.1 200 OK
@@ -164,20 +164,20 @@ curl -I https://test.bizuit.com/arielschBIZUITCustomForms/forms/recubiz-gestion/
 
 #### 2. Verificar Metadata en Admin Panel
 
-**URL:** https://test.bizuit.com/arielschBIZUITCustomForms/admin/forms
+**URL:** https://test.bizuit.com/clientXBIZUITCustomForms/admin/forms
 
 **Debe mostrar:**
 
 | Form Name | Version | Status | Last Updated | Actions |
 |-----------|---------|--------|--------------|---------|
-| recubiz-gestion | 1.0.8 | ✅ Active | 2025-11-23 14:05 | View / Delete |
+| example-form | 1.0.8 | ✅ Active | 2025-11-23 14:05 | View / Delete |
 
 #### 3. Testing en Runtime App
 
 **Con Token Mock (Solo si NEXT_PUBLIC_ALLOW_DEV_MODE=true):**
 
 ```
-https://test.bizuit.com/arielschBIZUITCustomForms/form/recubiz-gestion
+https://test.bizuit.com/clientXBIZUITCustomForms/form/example-form
   ?token=test-token
   &userName=TestUser
 ```
@@ -189,7 +189,7 @@ https://test.bizuit.com/arielschBIZUITCustomForms/form/recubiz-gestion
 El form se accede vía Dashboard de Bizuit BPM. El Dashboard genera URLs con token encriptado:
 
 ```
-https://test.bizuit.com/arielschBIZUITCustomForms/form/recubiz-gestion
+https://test.bizuit.com/clientXBIZUITCustomForms/form/example-form
   ?token={encrypted-jwt-token}
   &userName={real-user}
   &instanceId={process-instance}
@@ -205,7 +205,7 @@ https://test.bizuit.com/arielschBIZUITCustomForms/form/recubiz-gestion
 
 ```bash
 # 1. Hacer cambios al form
-cd recubiz-gestion
+cd example-form
 # Editar src/index.tsx
 
 # 2. Build local para testing
@@ -217,7 +217,7 @@ http-server -p 8080 --cors
 
 # 4. Commit y push
 git add .
-git commit -m "feat(recubiz-gestion): add new feature X"
+git commit -m "feat(example-form): add new feature X"
 git push origin dev
 
 # 5. Merge a main
@@ -230,17 +230,17 @@ git checkout dev
 #    - Detecta el cambio
 #    - Calcula nueva versión (v1.0.9)
 #    - Buildea el form
-#    - Crea ZIP: recubiz-gestion-deployment-1.0.9-{hash}.zip
-#    - Commitea ZIP a recubiz-gestion/upload/
-#    - Crea git tag: recubiz-gestion-v1.0.9
+#    - Crea ZIP: example-form-deployment-1.0.9-{hash}.zip
+#    - Commitea ZIP a example-form/upload/
+#    - Crea git tag: example-form-v1.0.9
 #    - Sube artifact a GitHub Actions
 
 # 7. Download artifact de GitHub Actions
 # https://github.com/{your-org}/bizuit-custom-form-sample/actions
 
 # 8. Upload via admin panel a cada entorno deseado
-# arielsch: test.bizuit.com/arielschBIZUITCustomForms/admin/upload-forms
-# recubiz: test.bizuit.com/recubizBIZUITCustomForms/admin/upload-forms
+# clientX: test.bizuit.com/clientXBIZUITCustomForms/admin/upload-forms
+# clientY: test.bizuit.com/clientYBIZUITCustomForms/admin/upload-forms
 ```
 
 ---
@@ -255,29 +255,30 @@ Crear 2 databases:
 
 ```sql
 -- Database 1: Dashboard del cliente
-CREATE DATABASE clienteXBizuitDashboard;
+CREATE DATABASE clientXBizuitDashboard;
 
 -- Database 2: Persistence Store (compartido)
--- (usar existente: arielschBizuitPersistenceStore)
+-- (usar existente o crear nueva)
+CREATE DATABASE clientXBizuitPersistenceStore;
 ```
 
 #### 1.2. Directorios en Servidor
 
 ```bash
 # Windows Server
-E:\BIZUITSites\clienteX\
-├── clienteXBIZUITCustomForms\           # Runtime App
+E:\BIZUITSites\clientX\
+├── clientXBIZUITCustomForms\           # Runtime App
 │   ├── .next\                            # Next.js build
 │   ├── public\
 │   │   └── forms\                        # Forms dinámicos
-│   │       ├── recubiz-gestion\
+│   │       ├── example-form\
 │   │       │   └── form.js
-│   │       └── sample-form-2\
+│   │       └── another-form\
 │   │           └── form.js
 │   ├── .env.local
 │   └── package.json
 │
-└── clienteXBIZUITCustomFormsBackEnd\    # Backend API
+└── clientXBIZUITCustomFormsBackEnd\    # Backend API
     ├── app\                              # FastAPI app
     ├── .env.local
     └── requirements.txt
@@ -288,22 +289,22 @@ E:\BIZUITSites\clienteX\
 #### 2.1. Crear `.env.local`
 
 ```bash
-# En: E:\BIZUITSites\clienteX\clienteXBIZUITCustomFormsBackEnd\.env.local
+# En: E:\BIZUITSites\clientX\clientXBIZUITCustomFormsBackEnd\.env.local
 
 # SQL Server - Main Database
 DB_SERVER=test.bizuit.com
-DB_DATABASE=clienteXBizuitDashboard
-DB_USER=BIZUITclienteX
+DB_DATABASE=clientXBizuitDashboard
+DB_USER=BIZUITclientX
 DB_PASSWORD={secure-password}
 
 # SQL Server - Persistence Store
 PERSISTENCE_DB_SERVER=test.bizuit.com
-PERSISTENCE_DB_DATABASE=arielschBizuitPersistenceStore
-PERSISTENCE_DB_USER=BIZUITarielsch
-PERSISTENCE_DB_PASSWORD=Th3Qu33n1sD34d$
+PERSISTENCE_DB_DATABASE=clientXBizuitPersistenceStore
+PERSISTENCE_DB_USER=BIZUITclientX
+PERSISTENCE_DB_PASSWORD={secure-password}
 
 # Bizuit Dashboard API
-BIZUIT_DASHBOARD_API_URL=https://test.bizuit.com/clienteXBizuitDashboardapi/api
+BIZUIT_DASHBOARD_API_URL=https://test.bizuit.com/clientXBizuitDashboardapi/api
 
 # Security
 JWT_SECRET_KEY={generate-with-openssl-rand-hex-32}
@@ -336,13 +337,13 @@ openssl rand -hex 32
 #### 3.1. Crear `.env.local`
 
 ```bash
-# En: E:\BIZUITSites\clienteX\clienteXBIZUITCustomForms\.env.local
+# En: E:\BIZUITSites\clientX\clientXBIZUITCustomForms\.env.local
 
 # Bizuit API Configuration
-NEXT_PUBLIC_BIZUIT_DASHBOARD_API_URL=https://test.bizuit.com/clienteXBizuitDashboardapi/api
+NEXT_PUBLIC_BIZUIT_DASHBOARD_API_URL=https://test.bizuit.com/clientXBizuitDashboardapi/api
 
 # Base path para IIS deployment
-NEXT_PUBLIC_BASE_PATH=/clienteXBIZUITCustomForms
+NEXT_PUBLIC_BASE_PATH=/clientXBIZUITCustomForms
 
 # FastAPI backend URL (server-side)
 FASTAPI_URL=http://localhost:8002
@@ -362,7 +363,7 @@ NEXT_PUBLIC_ALLOW_DEV_MODE=false
 #### 3.2. Build Next.js
 
 ```bash
-cd E:\BIZUITSites\clienteX\clienteXBIZUITCustomForms
+cd E:\BIZUITSites\clientX\clientXBIZUITCustomForms
 npm install
 npm run build
 ```
@@ -376,8 +377,8 @@ npm run build
 module.exports = {
   apps: [
     {
-      name: 'clienteX-runtime',
-      cwd: 'E:\\BIZUITSites\\clienteX\\clienteXBIZUITCustomForms',
+      name: 'clientX-runtime',
+      cwd: 'E:\\BIZUITSites\\clientX\\clientXBIZUITCustomForms',
       script: 'node_modules/next/dist/bin/next',
       args: 'start -p 3002',
       env: {
@@ -386,12 +387,12 @@ module.exports = {
       }
     },
     {
-      name: 'clienteX-backend',
-      cwd: 'E:\\BIZUITSites\\clienteX\\clienteXBIZUITCustomFormsBackEnd',
+      name: 'clientX-backend',
+      cwd: 'E:\\BIZUITSites\\clientX\\clientXBIZUITCustomFormsBackEnd',
       script: 'main.py',
       interpreter: 'python',
       env: {
-        PYTHONPATH: 'E:\\BIZUITSites\\clienteX\\clienteXBIZUITCustomFormsBackEnd'
+        PYTHONPATH: 'E:\\BIZUITSites\\clientX\\clientXBIZUITCustomFormsBackEnd'
       }
     }
   ]
@@ -406,8 +407,8 @@ pm2 start ecosystem.config.js
 
 # Verificar
 pm2 list
-pm2 logs clienteX-runtime
-pm2 logs clienteX-backend
+pm2 logs clientX-runtime
+pm2 logs clientX-backend
 
 # Save PM2 config
 pm2 save
@@ -426,17 +427,17 @@ pm2 startup
 
 #### 5.2. URL Rewrite Rules
 
-**Para:** `/clienteXBIZUITCustomForms/*`
+**Para:** `/clientXBIZUITCustomForms/*`
 
 ```xml
 <!-- Web.config en E:\DevSites\test.bizuit.com -->
-<rule name="clienteX-CustomForms-API" stopProcessing="true">
-  <match url="^clienteXBIZUITCustomForms/api/(.*)$" />
+<rule name="clientX-CustomForms-API" stopProcessing="true">
+  <match url="^clientXBIZUITCustomForms/api/(.*)$" />
   <action type="Rewrite" url="http://localhost:8002/api/{R:1}" />
 </rule>
 
-<rule name="clienteX-CustomForms-Runtime" stopProcessing="true">
-  <match url="^clienteXBIZUITCustomForms/(.*)$" />
+<rule name="clientX-CustomForms-Runtime" stopProcessing="true">
+  <match url="^clientXBIZUITCustomForms/(.*)$" />
   <action type="Rewrite" url="http://localhost:3002/{R:1}" />
 </rule>
 ```
@@ -453,17 +454,17 @@ pm2 startup
 
 #### 6.1. Upload via Admin Panel
 
-**URL:** https://test.bizuit.com/clienteXBIZUITCustomForms/admin/upload-forms
+**URL:** https://test.bizuit.com/clientXBIZUITCustomForms/admin/upload-forms
 
 **Login:** Usuario con rol `Administrators` o `FormManager`
 
 **Upload:**
 1. Click "Upload New Form"
-2. Select: `recubiz-gestion-deployment-1.0.8-abc1234.zip`
+2. Select: `example-form-deployment-1.0.8-abc1234.zip`
 3. Click "Upload"
 
 **Resultado:**
-- Form extraído a: `E:\BIZUITSites\clienteX\clienteXBIZUITCustomForms\public\forms\recubiz-gestion\form.js`
+- Form extraído a: `E:\BIZUITSites\clientX\clientXBIZUITCustomForms\public\forms\example-form\form.js`
 - Metadata guardada en DB (tabla FormMetadata)
 
 #### 6.2. Verificación
@@ -472,26 +473,26 @@ pm2 startup
 
 ```bash
 # Verificar que existe
-ls E:\BIZUITSites\clienteX\clienteXBIZUITCustomForms\public\forms\recubiz-gestion\form.js
+ls E:\BIZUITSites\clientX\clientXBIZUITCustomForms\public\forms\example-form\form.js
 
 # Verificar tamaño
-# Debe ser ~50 KB para recubiz-gestion
+# Debe ser ~50 KB para example-form
 ```
 
 **Check 2: HTTP Request**
 
 ```bash
-curl -I https://test.bizuit.com/clienteXBIZUITCustomForms/forms/recubiz-gestion/form.js
+curl -I https://test.bizuit.com/clientXBIZUITCustomForms/forms/example-form/form.js
 
 # Esperar: HTTP/1.1 200 OK
 ```
 
 **Check 3: Admin Panel**
 
-Ir a: https://test.bizuit.com/clienteXBIZUITCustomForms/admin/forms
+Ir a: https://test.bizuit.com/clientXBIZUITCustomForms/admin/forms
 
 Debe listar:
-- **Form:** recubiz-gestion
+- **Form:** example-form
 - **Version:** 1.0.8
 - **Status:** Active ✅
 
@@ -499,7 +500,7 @@ Debe listar:
 
 ```bash
 # Con NEXT_PUBLIC_ALLOW_DEV_MODE=true (solo desarrollo)
-https://test.bizuit.com/clienteXBIZUITCustomForms/form/recubiz-gestion?token=test&userName=Test
+https://test.bizuit.com/clientXBIZUITCustomForms/form/example-form?token=test&userName=Test
 
 # Con token real (producción)
 # El Dashboard genera la URL completa con token encriptado
@@ -513,10 +514,10 @@ https://test.bizuit.com/clienteXBIZUITCustomForms/form/recubiz-gestion?token=tes
 
 ```bash
 # 1. Download nuevo artifact de GitHub Actions
-# recubiz-gestion-deployment-1.0.9-xyz7890.zip
+# example-form-deployment-1.0.9-xyz7890.zip
 
 # 2. Upload via admin panel (mismo proceso que deployment inicial)
-https://test.bizuit.com/clienteXBIZUITCustomForms/admin/upload-forms
+https://test.bizuit.com/clientXBIZUITCustomForms/admin/upload-forms
 
 # 3. El sistema automáticamente:
 #    - Reemplaza form.js anterior
@@ -524,8 +525,8 @@ https://test.bizuit.com/clienteXBIZUITCustomForms/admin/upload-forms
 #    - Mantiene historial (si está configurado)
 
 # 4. Verificar nueva versión
-curl https://test.bizuit.com/clienteXBIZUITCustomForms/forms/recubiz-gestion/form.js | head -n 5
-# Debe mostrar: /* Bizuit Custom Form: recubiz-gestion */
+curl https://test.bizuit.com/clientXBIZUITCustomForms/forms/example-form/form.js | head -n 5
+# Debe mostrar: /* Bizuit Custom Form: example-form */
 #               /* Built: 2025-11-23T15:30:00.000Z */
 ```
 
@@ -534,7 +535,7 @@ curl https://test.bizuit.com/clienteXBIZUITCustomForms/forms/recubiz-gestion/for
 **Opción A: Via Admin Panel**
 
 1. Admin Panel → Forms
-2. Select form: recubiz-gestion
+2. Select form: example-form
 3. View History
 4. Select versión anterior (ej: 1.0.8)
 5. Click "Restore"
@@ -555,25 +556,25 @@ curl https://test.bizuit.com/clienteXBIZUITCustomForms/forms/recubiz-gestion/for
 
 ### Mismo Form, Diferentes Clientes
 
-**Escenario:** Deploy `recubiz-gestion` a ambos entornos (arielsch y recubiz)
+**Escenario:** Deploy `example-form` a ambos entornos (clientX y clientY)
 
 ```bash
 # 1. Download artifact UNA VEZ desde GitHub Actions
-recubiz-gestion-deployment-1.0.8-abc1234.zip
+example-form-deployment-1.0.8-abc1234.zip
 
 # 2. Upload a CADA entorno
 
-# Entorno 1: arielsch
-https://test.bizuit.com/arielschBIZUITCustomForms/admin/upload-forms
+# Entorno 1: clientX
+https://test.bizuit.com/clientXBIZUITCustomForms/admin/upload-forms
 → Upload ZIP
 
-# Entorno 2: recubiz
-https://test.bizuit.com/recubizBIZUITCustomForms/admin/upload-forms
+# Entorno 2: clientY
+https://test.bizuit.com/clientYBIZUITCustomForms/admin/upload-forms
 → Upload ZIP
 
 # 3. Verificar en cada entorno
-curl https://test.bizuit.com/arielschBIZUITCustomForms/forms/recubiz-gestion/form.js
-curl https://test.bizuit.com/recubizBIZUITCustomForms/forms/recubiz-gestion/form.js
+curl https://test.bizuit.com/clientXBIZUITCustomForms/forms/example-form/form.js
+curl https://test.bizuit.com/clientYBIZUITCustomForms/forms/example-form/form.js
 ```
 
 **Resultado:**
@@ -614,15 +615,15 @@ Esto permite usar **un único build** para múltiples entornos con diferentes ba
 
 ### Custom Forms con Procesos Específicos
 
-**Ejemplo:** Form `recubiz-gestion` que llama a proceso `RB_ObtenerProximaGestion`
+**Ejemplo:** Form `example-form` que llama a proceso `CustomProcess`
 
 ```typescript
 // src/index.tsx
 const SDK_CONFIG = {
-  apiUrl: 'https://test.bizuit.com/recubizBizuitDashboardapi/api/',
-  processName: 'RB_ObtenerProximaGestion',
-  username: 'admin',
-  password: 'admin123'
+  apiUrl: 'https://test.bizuit.com/clientXBizuitDashboardapi/api/',
+  processName: 'CustomProcess',
+  username: 'your_username',
+  password: 'your_password'
 };
 
 // El SDK se conecta al API del Dashboard del entorno
@@ -631,16 +632,16 @@ const sdk = new BizuitSDK({ apiUrl: SDK_CONFIG.apiUrl });
 
 **Deployment:**
 
-- **arielsch:** No usar este form (no tiene proceso RB_ObtenerProximaGestion)
-- **recubiz:** ✅ Deploy (tiene el proceso configurado)
+- **clientX:** ✅ Deploy (tiene el proceso CustomProcess)
+- **clientY:** Evaluar si tiene el mismo proceso o requiere variación
 
 ### Forms Agnósticos de Entorno
 
-**Ejemplo:** Form `sample-form-2` que usa parámetros del Dashboard
+**Ejemplo:** Form `another-form` que usa parámetros del Dashboard
 
 ```typescript
 // No hardcodear API URL, usar dashboardParams
-export default function SampleForm2({ dashboardParams }: FormProps) {
+export default function AnotherForm({ dashboardParams }: FormProps) {
   // SDK usa el token del Dashboard
   const { token, userName } = dashboardParams || {};
 
@@ -658,11 +659,11 @@ Este form **funciona en cualquier entorno** sin cambios.
 
 ```bash
 # Ver logs en tiempo real
-pm2 logs clienteX-runtime
-pm2 logs clienteX-backend
+pm2 logs clientX-runtime
+pm2 logs clientX-backend
 
 # Ver últimas 100 líneas
-pm2 logs clienteX-runtime --lines 100
+pm2 logs clientX-runtime --lines 100
 
 # Logs por fecha
 pm2 logs --timestamp
@@ -689,13 +690,13 @@ C:\inetpub\logs\LogFiles\W3SVC1\
 
 ### Form no carga - Error 404
 
-**Síntoma:** `GET /forms/recubiz-gestion/form.js → 404 Not Found`
+**Síntoma:** `GET /forms/example-form/form.js → 404 Not Found`
 
 **Checklist:**
 
 1. **Verificar archivo existe:**
    ```bash
-   ls E:\BIZUITSites\clienteX\clienteXBIZUITCustomForms\public\forms\recubiz-gestion\form.js
+   ls E:\BIZUITSites\clientX\clientXBIZUITCustomForms\public\forms\example-form\form.js
    ```
 
 2. **Verificar permisos:**
@@ -787,13 +788,13 @@ C:\inetpub\logs\LogFiles\W3SVC1\
 2. **manifest.json corrupto:**
 
    ```bash
-   unzip -p recubiz-gestion-deployment-1.0.8-abc1234.zip manifest.json | jq .
+   unzip -p example-form-deployment-1.0.8-abc1234.zip manifest.json | jq .
    ```
 
 3. **form.js faltante:**
 
    ```bash
-   unzip -l recubiz-gestion-deployment-1.0.8-abc1234.zip | grep form.js
+   unzip -l example-form-deployment-1.0.8-abc1234.zip | grep form.js
    ```
 
 ### PM2 Process crashed
@@ -804,10 +805,10 @@ C:\inetpub\logs\LogFiles\W3SVC1\
 
 ```bash
 # Ver logs del crash
-pm2 logs clienteX-runtime --err
+pm2 logs clientX-runtime --err
 
 # Reiniciar
-pm2 restart clienteX-runtime
+pm2 restart clientX-runtime
 
 # Si falla persistentemente, verificar:
 # 1. Puerto no está en uso

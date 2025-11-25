@@ -50,7 +50,7 @@ bizuit-custom-form-sample/
 │   ├── upload/                            # Deployment ZIPs (generated)
 │   └── package.json
 │
-├── recubiz-gestion/                       # Example form
+├── example-form/                          # Example form
 │   ├── src/
 │   │   └── index.tsx
 │   ├── dist/
@@ -101,8 +101,8 @@ Ver [DEVELOPMENT.md#setup-de-credenciales-de-desarrollo](DEVELOPMENT.md#setup-de
 ### 4. Testing Rápido con Fat Bundle
 
 ```bash
-# Compilar fat bundle
-npm run build
+# Compilar fat bundle (incluye dev-credentials y dev.html)
+npm run build:dev
 
 # Servir localmente
 cd dist
@@ -113,6 +113,8 @@ open http://localhost:8080/dev.html
 ```
 
 **¿Qué es el fat bundle?** Es un bundle que incluye todas las dependencias (SDK + UI components) en un solo archivo, permitiendo testing completamente standalone sin CDNs ni backend. Perfecto para desarrollo UI.
+
+**Nota:** `npm run build:dev` crea `form.dev.js` (fat bundle) y copia `dev-credentials.js` + `dev.html` a dist/. Para producción usa `npm run build` (crea `form.js` sin dependencias).
 
 ---
 
@@ -130,7 +132,7 @@ Luego sigue la [guía de customización](form-template/README.md#-customization-
 ### Opción 2: Copiar un Form Existente
 
 ```bash
-cp -r recubiz-gestion mi-nuevo-form
+cp -r example-form mi-nuevo-form
 cd mi-nuevo-form
 ```
 
@@ -167,7 +169,7 @@ cd mi-nuevo-form
 
 ```bash
 cd mi-nuevo-form
-npm run build
+npm run build:dev  # Crea fat bundle + copia dev-credentials + dev.html
 
 # Servir fat bundle
 cd dist
