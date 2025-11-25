@@ -11,13 +11,28 @@ Este repositorio demuestra cómo crear custom forms que:
 3. **Se empaquetan** para deployment offline via GitHub Actions
 4. **Se cargan dinámicamente** en runtime sin redeployment de IIS/Next.js
 
+---
+
 ## 📚 Documentación
 
-- **[Guía de Desarrollo](DEVELOPMENT.md)** - Desarrollo local, testing con dev.html, debugging
-- **[Guía de Deployment](DEPLOYMENT_GUIDE.md)** - Setup de entornos, deployment a arielsch/recubiz, troubleshooting
-- **[Versioning](VERSIONING.md)** - Sistema de versionado independiente por form
-- **[Azure DevOps Setup](AZURE_DEVOPS_SETUP.md)** - Configuración de pipelines (deprecado, usar GitHub Actions)
-- **[Changelog](CHANGELOG.md)** - Historial de cambios
+Este repositorio contiene documentación completa para desarrollar, testear y deployar custom forms:
+
+### 🎯 Para Empezar
+
+- **[form-template/README.md](form-template/README.md)** - Template listo para usar con guía de customización completa
+
+### 📖 Guías Detalladas
+
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Desarrollo local, testing con dev.html y fat bundle, debugging
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Setup de entornos, deployment a producción, troubleshooting
+- **[VERSIONING.md](VERSIONING.md)** - Sistema de versionado automático por form
+
+### 📦 Otros Recursos
+
+- **[CHANGELOG.md](CHANGELOG.md)** - Historial de cambios del repositorio
+- **[AZURE_DEVOPS_SETUP.md](AZURE_DEVOPS_SETUP.md)** - Configuración de pipelines Azure DevOps (deprecado - usar GitHub Actions)
+
+---
 
 ## 🏗️ Estructura del Repositorio
 
@@ -27,27 +42,36 @@ bizuit-custom-form-sample/
 │   └── workflows/
 │       └── build-deployment-package.yml   # GitHub Actions workflow
 │
-├── aprobacion-gastos/                     # Example form
+├── form-template/                         # ⭐ Template base para nuevos forms
 │   ├── src/
 │   │   └── index.tsx                      # Form source code
-│   ├── dist/
-│   │   ├── form.js                        # Compiled IIFE bundle
-│   │   ├── form.js.map                    # Source map
-│   │   └── form.meta.json                 # Metadata
+│   ├── dist/                              # Build output (generated)
+│   │   ├── form.js                        # Compiled bundle
+│   │   └── dev.html                       # Test page
+│   ├── upload/                            # Deployment ZIPs (generated)
 │   ├── package.json
-│   └── tsconfig.json
+│   └── README.md                          # Template documentation
+│
+├── recubiz-gestion/                       # Example form
+│   ├── src/
+│   │   └── index.tsx
+│   ├── dist/
+│   ├── upload/
+│   └── package.json
 │
 ├── build-form.js                          # Shared esbuild script
 ├── package.json                           # Root dependencies (esbuild)
-└── README.md
+└── README.md                              # This file
 ```
+
+---
 
 ## 🚀 Inicio Rápido
 
 ### 1. Clonar
 
 ```bash
-git clone https://github.com/arielsch74/bizuit-custom-form-sample.git
+git clone https://github.com/your-org/bizuit-custom-form-sample.git
 cd bizuit-custom-form-sample
 ```
 
@@ -57,229 +81,244 @@ cd bizuit-custom-form-sample
 # esbuild (dependencia raíz)
 npm install
 
-# Dependencias del form de ejemplo
-cd aprobacion-gastos
+# Dependencias del template
+cd form-template
 npm install
 ```
 
-### 3. Compilar
+### 3. Testing Rápido con Fat Bundle
 
 ```bash
+# Compilar fat bundle
 npm run build
-# Output: dist/form.js (3.8 KB aprox)
+
+# Servir localmente
+cd dist
+python3 -m http.server 8080
+
+# Abrir en navegador
+open http://localhost:8080/dev.html
 ```
+
+**¿Qué es el fat bundle?** Es un bundle que incluye todas las dependencias (SDK + UI components) en un solo archivo, permitiendo testing completamente standalone sin CDNs ni backend. Perfecto para desarrollo UI.
+
+---
 
 ## 📝 Crear un Nuevo Form
 
-### 1. Copiar Template
+### Opción 1: Copiar el Template
 
 ```bash
-cp -r aprobacion-gastos mi-nuevo-form
+cp -r form-template mi-nuevo-form
 cd mi-nuevo-form
 ```
 
-### 2. Editar `package.json`
+Luego sigue la [guía de customización](form-template/README.md#-customization-guide) para adaptar el template a tu caso de uso.
+
+### Opción 2: Copiar un Form Existente
+
+```bash
+cp -r recubiz-gestion mi-nuevo-form
+cd mi-nuevo-form
+```
+
+### Siguiente Paso: Editar el Form
+
+1. **Actualizar `package.json`:**
+   ```json
+   {
+     "name": "@tyconsa/bizuit-form-mi-nuevo-form",
+     "version": "1.0.0",
+     "description": "Descripción del form",
+     "author": "TuNombre",  // ⚠️ Sin espacios
+     "scripts": {
+       "build": "node ../build-form.js"
+     }
+   }
+   ```
+
+2. **Escribir el Form: `src/index.tsx`**
+   - Exportar componente React **por defecto**
+   - Usar `react` y `react-dom` libremente (son external)
+   - Ver [template README](form-template/README.md) para ejemplos
+
+3. **Compilar:**
+   ```bash
+   npm run build
+   ```
+
+---
+
+## 🧪 Testing
+
+### Testing Local (Recomendado para UI)
+
+```bash
+cd mi-nuevo-form
+npm run build
+
+# Servir fat bundle
+cd dist
+python3 -m http.server 8080
+
+# Abrir en navegador
+open http://localhost:8080/dev.html
+```
+
+### Testing en Runtime (Producción-like)
+
+Para testing completo con SDK calls y database, necesitas:
+
+1. **Configurar dev credentials** en `runtime-app/dev-credentials.js`
+   - Ver [DEVELOPMENT.md#setup-de-credenciales-de-desarrollo](DEVELOPMENT.md#setup-de-credenciales-de-desarrollo)
+
+2. **Habilitar dev mode** en `runtime-app/.env.local`:
+   ```env
+   ALLOW_DEV_MODE=true
+   ```
+
+3. **Start runtime services:**
+   ```bash
+   cd ../../  # Volver al root del proyecto principal
+   ./start-all.sh
+   ```
+
+4. **Upload form via admin:**
+   ```
+   http://localhost:3001/admin/upload-forms
+   ```
+
+5. **Test form:**
+   ```
+   http://localhost:3001/form/mi-nuevo-form
+   ```
+
+**Nota:** Los dev credentials y .env.local están en `runtime-app/`, NO en el directorio del form.
+
+---
+
+## 📦 Deployment & Versioning
+
+### Versionado Automático
+
+**IMPORTANTE:** El versionado es completamente automático - no necesitas especificar versiones manualmente.
+
+**Cómo funciona:**
+
+Cada push a `main` branch:
+1. ✅ Detecta forms cambiados (src/ o package.json)
+2. ✅ Lee versión actual de `package.json`
+3. ✅ Incrementa PATCH automáticamente (e.g., `1.0.0` → `1.0.1`)
+4. ✅ Actualiza `package.json` con nueva versión
+5. ✅ Compila cada form con esbuild
+6. ✅ Crea ZIP: `{form}-deployment-{version}-{hash}.zip`
+7. ✅ Commitea ZIPs a `{form}/upload/`
+8. ✅ Crea git tag: `{form}-v{version}`
+9. ✅ Sube artifacts a GitHub Actions
+
+**Nota:** Este sistema funciona idénticamente en GitHub Actions y Azure DevOps.
+
+### Release Notes
+
+Las release notes aparecen en el panel admin al ver el historial de versiones. Se extraen automáticamente del mensaje de commit.
+
+**Método recomendado - Conventional Commits:**
+
+```bash
+git commit -m "feat: nueva funcionalidad de aprobación
+
+- Agregado soporte para 3 niveles de aprobación
+- Mejorada validación de campos obligatorios
+- Corregido bug en cálculo de totales"
+```
+
+**Tipos de commit reconocidos:**
+- `feat:` - Nueva funcionalidad
+- `fix:` - Corrección de bug
+- `chore:` - Tareas de mantenimiento
+- `docs:` - Documentación
+- `refactor:` - Refactorización
+- `perf:` - Mejoras de performance
+
+**Formato simple:**
+
+```bash
+git commit -m "Mejoras en formulario de aprobación
+
+- Agregado soporte para múltiples niveles
+- Validación mejorada de campos
+- Fix en cálculos"
+```
+
+### Manual Version Override (Avanzado)
+
+Si necesitas cambiar MAJOR o MINOR versiones (para breaking changes), edita `package.json` manualmente:
+
+```bash
+# Editar version en package.json
+nano form-template/package.json
+# Cambiar: "version": "1.0.5" → "2.0.0"
+
+git add form-template/package.json
+git commit -m "chore: bump to v2.0.0 for breaking changes"
+git push
+
+# El próximo auto-increment será: 2.0.0 → 2.0.1
+```
+
+### Deployment Automático (GitHub Actions)
+
+**Trigger:** Push a `main` branch
+
+**Workflow:** `.github/workflows/build-deployment-package.yml`
+
+**Descargar artifacts:**
+
+1. Ir a: https://github.com/your-org/bizuit-custom-form-sample/actions
+2. Click en el workflow run exitoso
+3. Scroll down a "Artifacts"
+4. Download ZIP del form deseado
+
+**Upload a entorno:**
+
+- **URL Admin Panel:** `https://{server}/{tenant}BIZUITCustomForms/admin/upload-forms`
+- **Drag & drop** el ZIP descargado
+- El form estará disponible inmediatamente
+
+Ver [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) para setup completo de entornos.
+
+### Configuración de package.json
+
+**Estructura requerida:**
 
 ```json
 {
-  "name": "mi-nuevo-form",
+  "name": "form-template",
   "version": "1.0.0",
-  "description": "Descripción del form",
-  "author": "Tu Nombre",
+  "description": "Descripción del formulario",
+  "author": "NombreAutor",  // ⚠️ SIN ESPACIOS
   "scripts": {
     "build": "node ../build-form.js"
-  },
-  "devDependencies": {
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "typescript": "^5.3.0"
   }
 }
 ```
 
-### 3. Escribir el Form: `src/index.tsx`
+**Reglas importantes:**
 
-```tsx
-import { useState } from 'react';
+1. **`author` NO debe contener espacios**
+   - ✅ `"author": "JohnDoe"` o `"author": "John_Doe"`
+   - ❌ `"author": "John Doe"` (rechazado por backend)
 
-export default function MiNuevoForm() {
-  const [valor, setValor] = useState('');
+2. **`version` es auto-gestionada**
+   - NO edites manualmente (salvo para cambios MAJOR/MINOR)
+   - El workflow actualiza automáticamente el PATCH
+   - Formato: `MAJOR.MINOR.PATCH` (ej: `1.0.0`)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Submitted:', valor);
-  };
+3. **`description` y `author` aparecen en admin panel**
+   - Escribe descripciones claras y concisas
+   - Se muestran en la lista de formularios
 
-  return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Mi Nuevo Form</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          value={valor}
-          onChange={(e) => setValor(e.target.value)}
-          className="border p-2 rounded w-full"
-          placeholder="Ingresa un valor"
-        />
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Enviar
-        </button>
-      </form>
-    </div>
-  );
-}
-```
-
-**Requisitos del Form:**
-- ✅ Exportar componente React **por defecto**
-- ✅ Usar `react` y `react-dom` libremente (son external)
-- ✅ Cualquier feature de React (hooks, context, etc.)
-- ❌ NO importar React globalmente (ya está en `window.React`)
-
-### 4. Compilar
-
-```bash
-npm run build
-```
-
-Genera:
-- **`dist/form.js`** - Bundle IIFE listo para carga dinámica
-- **`dist/form.meta.json`** - Metadata (nombre, versión, tamaño, fecha)
-
-## 🧪 Testing Local con Fat Bundle
-
-### Opción recomendada para desarrollo:
-
-El **fat bundle** incluye todas las dependencias (SDK + UI components) para testing standalone.
-
-#### 1. Compilar Fat Bundle:
-
-```bash
-cd form-template  # o tu form
-npm run build:dev
-```
-
-Genera `dist/form.dev.js` (~500 KB con todas las dependencias)
-
-#### 2. Configurar Credenciales (opcional):
-
-```bash
-# Copiar template
-cp dev-credentials.example.js dev-credentials.js
-
-# Editar con credenciales reales del Dashboard
-nano dev-credentials.js
-```
-
-**dev-credentials.js:**
-```javascript
-export const DEV_CREDENTIALS = {
-  username: 'tu-usuario',
-  password: 'tu-password',
-  apiUrl: 'https://test.bizuit.com/yourTenantBizuitDashboardapi/api'
-};
-```
-
-⚠️ Este archivo está en `.gitignore` - NO se commitea.
-
-#### 3. Levantar HTTP Server:
-
-```bash
-cd form-template
-http-server -p 8080 --cors
-```
-
-Si no tenés `http-server`:
-```bash
-npm install -g http-server
-```
-
-#### 4. Abrir en Navegador:
-
-```
-http://localhost:8080/dist/dev.html
-```
-
-El form se carga con:
-- ✅ React desde CDN (peer dependency)
-- ✅ SDK + UI components incluidos en fat bundle
-- ✅ Credenciales desde `dev-credentials.js`
-- ✅ Hot reload con F5 (cache buster automático)
-
-#### 5. Watch Mode (opcional):
-
-Para rebuild automático en cada cambio:
-
-```bash
-# Terminal 1: Watch mode
-npx nodemon --watch src --ext tsx,ts --exec "npm run build:dev"
-
-# Terminal 2: HTTP Server
-http-server -p 8080 --cors
-```
-
-Ahora cada cambio en `src/` recompila el fat bundle automáticamente.
-
-**Ver documentación completa:** [DEVELOPMENT.md](DEVELOPMENT.md)
-
-## 📦 Deployment Offline
-
-### Flujo Completo
-
-```
-1. Desarrollo → Editar forms en directorios individuales
-2. Push → git push origin main
-3. GitHub Actions → Compila todos los forms automáticamente
-4. Descarga → Artifacts → bizuit-custom-forms-deployment-{version}.zip
-5. Transferencia → USB/Red interna al servidor offline
-6. Upload → Interfaz web: /admin/upload-forms
-7. Runtime → Forms disponibles inmediatamente (hot reload)
-```
-
-### Trigger Manual del Workflow
-
-Para crear un deployment con versión específica:
-
-1. **Actions** → **Build Deployment Package (Offline)**
-2. **Run workflow**
-3. Ingresa versión (ej: `1.2.0`)
-4. Descarga el artifact `.zip` (retención: 90 días)
-
-### Estructura del Package `.zip`
-
-```
-bizuit-custom-forms-deployment-1.0.0.zip
-├── manifest.json
-└── forms/
-    ├── aprobacion-gastos/
-    │   └── form.js
-    └── otro-form/
-        └── form.js
-```
-
-**`manifest.json` contiene:**
-
-```json
-{
-  "packageVersion": "1.0.202501121530",
-  "buildDate": "2025-01-12T15:30:00.000Z",
-  "commitHash": "a1b2c3d",
-  "forms": [
-    {
-      "formName": "aprobacion-gastos",
-      "processName": "AprobacionGastos",
-      "version": "1.0.0",
-      "author": "Bizuit Team",
-      "description": "Form para aprobación de gastos",
-      "sizeBytes": 3940,
-      "path": "forms/aprobacion-gastos/form.js"
-    }
-  ]
-}
-```
+---
 
 ## 🔧 Cómo Funciona
 
@@ -295,13 +334,15 @@ esbuild.build({
   globalName: 'CustomForm',
 
   // React como external (runtime lo proporciona)
-  external: ['react', 'react-dom'],
+  external: ['react', 'react-dom', '@tyconsa/bizuit-form-sdk', '@tyconsa/bizuit-ui-components'],
 
   // Inyectar referencias globales
   banner: {
     js: `
       const React = window.React;
       const ReactDOM = window.ReactDOM;
+      const BizuitSDK = window.BizuitSDK;
+      const BizuitUIComponents = window.BizuitUIComponents;
     `.trim(),
   },
 
@@ -313,141 +354,48 @@ esbuild.build({
 
 ### ¿Por Qué React es External?
 
-El runtime app (Next.js) expone React globalmente para **evitar múltiples instancias**:
+El runtime app (Next.js) expone React globalmente para **evitar múltiples instancias**. Si cada form bundlea React → **Error: "Invalid hook call"**
 
-```tsx
-// runtime-app/components/ReactGlobalExposer.tsx
-useEffect(() => {
-  window.React = React;
-  window.ReactDOM = ReactDOM;
-  window.__REACT_READY__ = true;
-}, []);
+### Estructura del Deployment Package ZIP
+
+```
+mi-form-deployment-1.0.5-abc1234.zip
+├── manifest.json
+├── VERSION.txt
+└── forms/
+    └── mi-form/
+        └── form.js
 ```
 
-Si cada form bundlea React → **Error: "Invalid hook call"**
+**`manifest.json` contiene:**
 
-### GitHub Actions Workflow
-
-Ejecuta automáticamente cuando:
-- Push a `main` con cambios en forms
-- Trigger manual desde GitHub Actions UI
-
-**Pasos del Workflow:**
-
-1. ✅ Checkout código
-2. ✅ Instalar dependencias (`npm install`)
-3. ✅ Compilar TODOS los forms (busca directorios con `package.json`)
-4. ✅ Generar `manifest.json` dinámicamente
-5. ✅ Crear estructura `forms/{formName}/form.js`
-6. ✅ Comprimir en `.zip`
-7. ✅ Subir como artifact (retención: 90 días)
-8. ✅ (Opcional) Crear GitHub Release
-
-## 🗄️ Backend: FastAPI + SQL Server
-
-### API Endpoint: `/api/deployment/upload`
-
-Recibe el `.zip` y:
-
-1. Extrae y valida `manifest.json`
-2. Lee cada `form.js` compilado
-3. Ejecuta `sp_UpsertCustomForm` en SQL Server
-4. Retorna resultados por form (inserted/updated/failed)
-
-### SQL Server
-
-**Tablas:**
-
-- **CustomForms**: Metadata (FormId, FormName, CurrentVersion, Status)
-- **CustomFormVersions**: Historial (VersionId, FormId, Version, CompiledCode, IsCurrent)
-
-**Stored Procedure:**
-
-```sql
-EXEC sp_UpsertCustomForm
-  @FormName = 'aprobacion-gastos',
-  @ProcessName = 'AprobacionGastos',
-  @Version = '1.0.0',
-  @Description = 'Form para aprobación de gastos',
-  @Author = 'Bizuit Team',
-  @CompiledCode = '/* código JS compilado */',
-  @SizeBytes = 3940,
-  @PackageVersion = '1.0.202501121530',
-  @CommitHash = 'a1b2c3d',
-  @BuildDate = '2025-01-12T15:30:00'
+```json
+{
+  "packageVersion": "1.0.202501231530",
+  "buildDate": "2025-01-23T15:30:00.000Z",
+  "commitHash": "abc1234",
+  "forms": [
+    {
+      "formName": "mi-form",
+      "version": "1.0.5",
+      "author": "TuNombre",
+      "description": "Descripción del form",
+      "sizeBytes": 52000,
+      "path": "forms/mi-form/form.js"
+    }
+  ]
+}
 ```
+
+---
 
 ## 🔄 Hot Reload
 
-El runtime hace polling cada **10 segundos** a `/api/custom-forms/versions`:
+El runtime hace polling cada **10 segundos** a `/api/custom-forms/versions`. Si detecta una nueva versión, recarga el form automáticamente **SIN reiniciar** IIS ni Next.js.
 
-```typescript
-const checkForUpdates = async () => {
-  const res = await fetch('/api/custom-forms/versions');
-  const versions = await res.json();
+---
 
-  if (versions[formName] !== currentVersion) {
-    // Nueva versión → recargar
-    const code = await fetch(`/api/custom-forms/${formName}/code`);
-    loadDynamicForm(await code.text());
-    setCurrentVersion(versions[formName]);
-  }
-};
-```
-
-**Ventaja**: Forms se actualizan SIN reiniciar IIS ni Next.js.
-
-## 🛠️ Desarrollo Local
-
-### Servir Forms Localmente
-
-```bash
-# Terminal 1: Runtime App
-cd custom-forms/runtime-app
-npm run dev  # Puerto 3001
-
-# Terminal 2: Backend API
-cd custom-forms/backend-api
-python main.py  # Puerto 8000
-
-# Acceder: http://localhost:3001/form/aprobacion-gastos
-```
-
-### Compilar en Watch Mode
-
-```bash
-cd aprobacion-gastos
-npx nodemon --watch src --ext tsx,ts --exec "npm run build"
-```
-
-## 🧪 Testing
-
-### Probar Upload Manual
-
-1. Ejecuta workflow manualmente o descarga artifact de run anterior
-2. Descarga el `.zip`
-3. Accede a `http://localhost:3001/admin/upload-forms`
-4. Arrastra el `.zip` y suelta
-5. Verifica resultados en la UI
-
-### Verificar en SQL Server
-
-```sql
--- Forms activos
-SELECT * FROM CustomForms WHERE Status = 'active';
-
--- Versiones de un form
-SELECT * FROM CustomFormVersions
-WHERE FormId = (SELECT FormId FROM CustomForms WHERE FormName = 'aprobacion-gastos')
-ORDER BY PublishedAt DESC;
-
--- Código compilado actual
-SELECT TOP 1 CompiledCode FROM CustomFormVersions
-WHERE FormId = (SELECT FormId FROM CustomForms WHERE FormName = 'aprobacion-gastos')
-  AND IsCurrent = 1;
-```
-
-## 🚨 Troubleshooting
+## 🛠️ Troubleshooting
 
 ### Error: "Invalid hook call"
 
@@ -455,13 +403,13 @@ WHERE FormId = (SELECT FormId FROM CustomForms WHERE FormName = 'aprobacion-gast
 
 **Solución**: Verifica `build-form.js` tenga `external: ['react', 'react-dom']`
 
-### Form no aparece en `/forms`
+### Form no aparece en runtime
 
 **Checklist**:
-1. ✅ Form en SQL Server: `SELECT * FROM CustomForms`
-2. ✅ CompiledCode no es NULL
-3. ✅ IsCurrent = 1 en CustomFormVersions
-4. ✅ API `/api/custom-forms/{formName}/code` devuelve código
+1. ✅ Form compilado: `ls -la dist/form.js`
+2. ✅ ZIP uploaded via admin panel
+3. ✅ Form en database (ver admin panel → Forms)
+4. ✅ Runtime app corriendo (`./start-all.sh`)
 
 ### GitHub Action falla
 
@@ -473,34 +421,48 @@ WHERE FormId = (SELECT FormId FROM CustomForms WHERE FormName = 'aprobacion-gast
 
 **Revisar**: Logs del workflow en **Actions** → build step
 
-### Upload `.zip` falla
+### "Invalid author format" en Upload
 
-**Checklist**:
-1. ✅ `.zip` tiene `manifest.json` en raíz
-2. ✅ Estructura correcta: `forms/{formName}/form.js`
-3. ✅ Tamaño < 50 MB
-4. ✅ Backend FastAPI corriendo (puerto 8000)
-5. ✅ SQL Server accesible desde FastAPI
+**Error**: `Invalid author format: Tycon S.A.`
+
+**Solución**: El autor NO puede contener espacios. Usar:
+- ✅ `"author": "Tyconsa"`
+- ✅ `"author": "John-Doe"`
+- ✅ `"author": "admin@bizuit"`
+- ❌ `"author": "Tycon SA"` (tiene espacio)
+
+---
 
 ## 📚 Documentación Relacionada
 
-En el proyecto principal (`BIZUITFormTemplate`):
+En el proyecto principal (`BIZUITCustomForms`):
 
-- **[DYNAMIC_FORMS.md](../custom-forms/docs/DYNAMIC_FORMS.md)** - Arquitectura completa
-- **[BACKEND_IMPLEMENTATION.md](../custom-forms/docs/BACKEND_IMPLEMENTATION.md)** - API y DB
-- **[OFFLINE_DEPLOYMENT.md](../custom-forms/docs/OFFLINE_DEPLOYMENT.md)** - Guía offline
-- **[IIS_DEPLOYMENT.md](../custom-forms/docs/IIS_DEPLOYMENT.md)** - IIS + reverse proxy
+- **[DYNAMIC_FORMS.md](../docs/DYNAMIC_FORMS.md)** - Arquitectura completa
+- **[BACKEND_IMPLEMENTATION.md](../docs/BACKEND_IMPLEMENTATION.md)** - API y DB
+- **[OFFLINE_DEPLOYMENT.md](../docs/OFFLINE_DEPLOYMENT.md)** - Guía offline
+- **[IIS_DEPLOYMENT.md](../docs/IIS_DEPLOYMENT.md)** - IIS + reverse proxy
+
+Documentación interactiva:
+- **`http://localhost:3001/docs`** - Developer documentation web UI
+
+---
 
 ## 🤝 Contribuir
 
 1. Fork el repositorio
 2. Crea branch: `git checkout -b feature/mi-form`
-3. Agrega form en directorio nuevo (estructura como `aprobacion-gastos/`)
+3. Agrega form en directorio nuevo (estructura como `form-template/`)
 4. Verifica que compile: `cd mi-form && npm run build`
-5. Commit: `git commit -m "Add: mi-form custom form"`
+5. Commit: `git commit -m "feat: add mi-form custom form"`
 6. Push: `git push origin feature/mi-form`
 7. Abre Pull Request
+
+---
 
 ## 📄 Licencia
 
 ISC
+
+---
+
+**Tycon S.A.** - Custom Forms Development Team

@@ -1,16 +1,16 @@
-# Automatic Semantic Versioning
+# Automatic Versioning
 
-This repository uses **automatic semantic versioning** for deployment packages. The version number is automatically incremented on every build, ensuring consistent and traceable versioning.
+This repository uses **automatic versioning** for deployment packages. The version number is automatically incremented on every build, ensuring consistent and traceable versioning.
 
 ## 🎯 How It Works
 
-### Automatic Version Increment (Simple PATCH Increment)
+### Automatic PATCH Increment
 
-**Simplificado:** Cada build incrementa automáticamente la versión **PATCH** del formulario.
+Each build automatically increments the **PATCH** version of the form.
 
-When you push to `main` or `release/*` branches, the CI/CD pipeline (GitHub Actions or Azure DevOps) automatically:
+When you push to `main` branch, the CI/CD pipeline (GitHub Actions or Azure DevOps) automatically:
 
-1. **Reads** the previous version from `package.json` in the last commit
+1. **Reads** the current version from `package.json`
 2. **Increments** the PATCH version (e.g., `1.0.0` → `1.0.1`)
 3. **Updates** `package.json` with the new version
 4. **Commits** the updated `package.json` back to the repository
@@ -33,34 +33,25 @@ This versioning system works identically in **both** CI/CD platforms:
 
 Both pipelines use the **same logic** for version increment, ensuring consistency regardless of which platform you use.
 
-### 🔢 Version Bump Rules (Simplified)
+### 📝 Commit Message Recommendations
 
-**Current implementation:** All changes increment **PATCH** version only.
-
-| Trigger | Version Bump | Example |
-|---------|--------------|---------|
-| Any push to `main` | **Patch** (x.y.Z) | `v1.0.0` → `v1.0.1` |
-| Any push with form changes | **Patch** (x.y.Z) | `v1.0.1` → `v1.0.2` |
-
-### Commit Message Examples
-
-**Nota:** Aunque el sistema actualmente incrementa solo PATCH, es buena práctica usar conventional commits para documentar el tipo de cambio:
+While the system automatically increments PATCH for all changes, it's good practice to use conventional commits for documentation:
 
 ```bash
 # Bug fixes
-git commit -m "fix: corregir validación de fechas en formulario"
+git commit -m "fix: correct date validation"
 
 # New features
-git commit -m "feat: agregar nuevo campo de selección múltiple"
+git commit -m "feat: add multi-select field"
 
 # Maintenance
-git commit -m "chore: actualizar dependencias"
+git commit -m "chore: update dependencies"
 
 # Documentation
-git commit -m "docs: mejorar documentación de API"
+git commit -m "docs: improve API documentation"
 ```
 
-**Todas resultan en:** `v1.0.0` → `v1.0.1` (PATCH increment)
+All commits result in: `v1.0.0` → `v1.0.1` (PATCH increment)
 
 ## 🎛️ Manual Version Override (Advanced)
 
@@ -102,62 +93,6 @@ To set a different starting version:
 git tag -a v1.0.0 -m "Initial release"
 git push origin v1.0.0
 ```
-
-## Best Practices
-
-### Conventional Commits Format
-
-Follow this format for clear versioning:
-
-```
-<type>: <short description>
-
-<optional detailed description>
-
-<optional footer with breaking changes>
-```
-
-**Examples:**
-
-```bash
-# Simple commit
-git commit -m "fix: resolver error de validación en campo email"
-
-# With body
-git commit -m "feat: agregar soporte para archivos ZIP
-
-Permite subir archivos ZIP hasta 50MB
-Incluye validación de contenido
-Mejora UX con barra de progreso"
-
-# Breaking change
-git commit -m "major: cambiar API de autenticación
-
-BREAKING CHANGE: El endpoint /auth/login ahora requiere
-header Authorization con formato Bearer token"
-```
-
-### Common Commit Types
-
-| Type | Usage | Version Bump |
-|------|-------|--------------|
-| `feat` | New feature | Minor |
-| `fix` | Bug fix | Patch |
-| `docs` | Documentation only | Patch |
-| `style` | Formatting, missing semicolons | Patch |
-| `refactor` | Code restructuring | Patch |
-| `perf` | Performance improvements | Patch |
-| `test` | Adding tests | Patch |
-| `chore` | Maintenance tasks | Patch |
-| `major` | Breaking changes | Major |
-
-### Multiple Changes
-
-If you have multiple changes, use the **most significant** type:
-
-- Bug fix + new feature → Use `feat:` (minor bump)
-- Multiple bug fixes → Use `fix:` (patch bump)
-- New feature + breaking change → Use `major:` (major bump)
 
 ## Workflow Triggers
 

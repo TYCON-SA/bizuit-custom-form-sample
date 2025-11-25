@@ -1,5 +1,10 @@
 # Azure DevOps Pipeline Setup Guide
 
+> ⚠️ **NOTA**: GitHub Actions es la plataforma recomendada para este proyecto.
+> Esta guía se mantiene como referencia para equipos que usan Azure DevOps.
+>
+> **Plataforma recomendada:** Ver [GitHub Workflow Setup](GITHUB_WORKFLOW_SETUP_INSTRUCTIONS.md)
+
 Esta guía explica cómo configurar el pipeline de Azure DevOps para builds automáticos de formularios personalizados.
 
 ## 📋 Requisitos Previos
