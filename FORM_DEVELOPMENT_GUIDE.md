@@ -48,7 +48,9 @@ nano dev-credentials.js
 export const DEV_CREDENTIALS = {
   username: 'admin',  // Dashboard username (e.g., admin, user01, etc.)
   password: 'YourPassword',
-  apiUrl: 'https://test.bizuit.com/{yourTenant}BizuitDashboardapi/api/'
+  apiUrl: 'https://{yourServer}/{yourTenant}BizuitDashboardapi/api/'
+  //              ^^^^^^^^^^^  ^^^^^^^^^^
+  //              Your server  Your tenant
 };
 ```
 
@@ -152,7 +154,9 @@ FormTemplate
 ```typescript
 // src/index.tsx (lines 27-33)
 const SDK_CONFIG = {
-  defaultApiUrl: 'https://test.bizuit.com/{yourTenant}BizuitDashboardapi/api/',
+  defaultApiUrl: 'https://{yourServer}/{yourTenant}BizuitDashboardapi/api/',
+  //                      ^^^^^^^^^^^  ^^^^^^^^^^
+  //                      Your server  Your tenant
   processName: 'YourActualProcessName'  // ← Change this
 };
 ```
@@ -322,9 +326,9 @@ For local fat bundle testing, you need dev credentials in the form directory:
 export const DEV_CREDENTIALS = {
   username: 'admin',  // Dashboard username (e.g., admin, user01, etc.)
   password: 'YourDashboardPassword',
-  apiUrl: 'https://test.bizuit.com/{yourTenant}BizuitDashboardapi/api/'
-  //                                  ^^^^^^^^^^
-  //                                  Your tenant name
+  apiUrl: 'https://{yourServer}/{yourTenant}BizuitDashboardapi/api/'
+  //              ^^^^^^^^^^^  ^^^^^^^^^^
+  //              Your server  Your tenant
 }
 ```
 
@@ -362,7 +366,7 @@ FASTAPI_URL=http://127.0.0.1:8000
 # Development credentials (used when NEXT_PUBLIC_ALLOW_DEV_MODE=true)
 DEV_USERNAME=your-dashboard-username
 DEV_PASSWORD=your-dashboard-password
-DEV_API_URL=https://test.bizuit.com/yourTenantBizuitDashboardapi/api/
+DEV_API_URL=https://{yourServer}/yourTenantBizuitDashboardapi/api/
 
 # Session & Security
 NEXT_PUBLIC_SESSION_TIMEOUT_MINUTES=30
