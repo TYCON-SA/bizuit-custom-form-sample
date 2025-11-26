@@ -252,9 +252,7 @@ open http://localhost:8080/dev.html
 - ✅ Optional backend - UI works without it, SDK needs backend running
 
 **Cons**:
-- ⚠️ SDK auth code is commented out by default (template shows structure)
-- ⚠️ Uses mock data until you uncomment SDK authentication code
-- ⚠️ Requires backend running on port 8000 for real SDK calls
+- 🐢 Slower than pure mock data approach
 
 ### Workflow 2: Runtime Testing (Production-like)
 
