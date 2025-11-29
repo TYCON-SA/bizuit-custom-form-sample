@@ -148,15 +148,13 @@ stages:
                   PREVIOUS_VERSION=$(git show HEAD~1:"$form_name/package.json" 2>/dev/null | jq -r '.version // "0.0.0"' 2>/dev/null || echo "0.0.0")
                   echo "📜 Previous version: $PREVIOUS_VERSION"
 
-                  # Auto-increment PATCH
-                  IFS='.' read -r MAJOR MINOR PATCH <<< "$PREVIOUS_VERSION"
-
                   # Validar que PREVIOUS_VERSION tiene formato correcto (X.Y.Z)
                   if [ -z "$PREVIOUS_VERSION" ] || [ "$PREVIOUS_VERSION" = "0.0.0" ] || ! [[ "$PREVIOUS_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
                     NEW_VERSION="1.0.0"
                     echo "🎉 First deployment or invalid version! Starting at v1.0.0"
                     echo "   Previous version was: '$PREVIOUS_VERSION'"
                   else
+                    IFS='.' read -r MAJOR MINOR PATCH <<< "$PREVIOUS_VERSION"
                     PATCH=$((PATCH + 1))
                     NEW_VERSION="$MAJOR.$MINOR.$PATCH"
                     echo "🔼 Auto-increment: $PREVIOUS_VERSION → $NEW_VERSION"
