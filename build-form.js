@@ -30,40 +30,6 @@ async function buildForm() {
       fs.mkdirSync(distDir, { recursive: true });
     }
 
-    // Store collected CSS
-    let collectedCSS = '';
-
-    // Plugin to collect CSS and inject it into the bundle
-    const inlineCSSPlugin = {
-      name: 'inline-css',
-      setup(build) {
-        // Intercept CSS imports
-        build.onLoad({ filter: /\.css$/ }, async (args) => {
-          const cssContent = await fs.promises.readFile(args.path, 'utf8');
-          collectedCSS += cssContent + '\n';
-
-          // Return JS code that injects the CSS
-          return {
-            contents: `
-// Inject CSS for ${path.basename(args.path)}
-(function() {
-  if (typeof document !== 'undefined') {
-    const styleId = '${config.formName}-styles';
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = ${JSON.stringify(cssContent)};
-      document.head.appendChild(style);
-    }
-  }
-})();
-            `.trim(),
-            loader: 'js',
-          };
-        });
-      },
-    };
-
     // Plugin to replace React and Bizuit packages with global references
     const globalExternalsPlugin = {
       name: 'global-externals',
@@ -126,8 +92,8 @@ async function buildForm() {
       minify: true,
       sourcemap: true,
 
-      // Use plugins to inline CSS and inject global references for React and Bizuit packages
-      plugins: [inlineCSSPlugin, globalExternalsPlugin],
+      // Use plugin to inject global references for React and Bizuit packages
+      plugins: [globalExternalsPlugin],
 
       // Replace React imports with global references
       banner: {
@@ -153,6 +119,7 @@ const ReactDOM = window.ReactDOM;
         '.ts': 'ts',
         '.jsx': 'jsx',
         '.js': 'js',
+        '.css': 'css',
         '.json': 'json',
       },
 
