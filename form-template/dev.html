@@ -96,8 +96,8 @@
     const root = ReactDOM.createRoot(container);
 
     // Mock dashboard parameters for testing
-    // In dev mode: pass devUsername/devPassword/devApiUrl/devPluginApiUrl
-    // In production: Dashboard/FormLoader provides token, apiUrl, and pluginApiUrl
+    // In dev mode: pass devUsername/devPassword/devApiUrl/devPluginApiUrl + roles/roleSettings
+    // In production: Dashboard/FormLoader provides token, apiUrl, pluginApiUrl, roles, roleSettings
     const mockDashboardParams = {
       userName: DEV_CREDENTIALS.username,
       instanceId: 'dev-instance-001',
@@ -107,7 +107,10 @@
       devUsername: DEV_CREDENTIALS.username,
       devPassword: DEV_CREDENTIALS.password,
       devApiUrl: DEV_CREDENTIALS.apiUrl,
-      devPluginApiUrl: DEV_CREDENTIALS.pluginApiUrl
+      devPluginApiUrl: DEV_CREDENTIALS.pluginApiUrl,
+      // Emulate what runtime-app sends (roles and roleSettings from Dashboard)
+      roles: DEV_CREDENTIALS.roles,
+      roleSettings: DEV_CREDENTIALS.roleSettings
     };
 
     // Render the form

@@ -104,3 +104,70 @@ export default function MyForm({ dashboardParams }) {
   // ... rest of form
 }
 ```
+
+---
+
+## Using Roles and RoleSettings
+
+In production, `runtime-app` passes user roles and role settings from Dashboard to your form via `dashboardParams`. For local development, you can emulate this by configuring them in `dev-credentials.js`.
+
+### Configuration
+
+```javascript
+// dev-credentials.js
+export const DEV_CREDENTIALS = {
+  username: 'your-username',
+  password: 'your-password',
+  apiUrl: 'https://test.bizuit.com/yourTenantBizuitDashboardapi/api/',
+  pluginApiUrl: 'http://localhost:8000/api/plugins/yourplugin',
+
+  // Emulate what runtime-app sends from Dashboard
+  roles: ['Gestores', 'Administrators'],
+  roleSettings: [
+    { roleName: 'Gestores', settingName: 'IdGestor', settingValue: '3' }
+  ]
+};
+```
+
+### Finding Your Role Settings
+
+Role settings are stored in Dashboard database tables:
+- `UserRoleSettings` - User-specific settings
+- `UserRoleSettingsDefinition` - Setting definitions
+
+Ask your Dashboard admin for your specific settings, or query the database directly.
+
+### Using roleSettings in Your Form
+
+```typescript
+interface RoleSetting {
+  roleName: string;
+  settingName: string;
+  settingValue: string;
+}
+
+export default function MyForm({ dashboardParams }) {
+  // Extract a specific setting
+  const idGestorSetting = dashboardParams.roleSettings?.find(
+    (s: RoleSetting) => s.settingName === 'IdGestor' && s.roleName === 'Gestores'
+  );
+
+  const idGestor = idGestorSetting
+    ? parseInt(idGestorSetting.settingValue, 10)
+    : null;
+
+  // Check user roles
+  const isAdmin = dashboardParams.roles?.includes('Administrators');
+
+  // ... rest of form
+}
+```
+
+### Available in dashboardParams
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `roles` | `string[]` | User's Dashboard roles |
+| `roleSettings` | `RoleSetting[]` | User's role-specific settings |
+| `userName` | `string` | Authenticated username |
+| `displayName` | `string` | User's display name |
