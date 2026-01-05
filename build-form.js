@@ -85,17 +85,41 @@ async function buildForm() {
 
         // Return global references for these imports
         build.onLoad({ filter: /.*/, namespace: 'global-externals' }, args => {
-          const contents = args.path === 'react'
-            ? 'module.exports = window.React'
-            : args.path === 'react-dom'
-            ? 'module.exports = window.ReactDOM'
-            : args.path.includes('jsx-runtime')
-            ? 'module.exports = { jsx: window.React.createElement, jsxs: window.React.createElement, Fragment: window.React.Fragment }'
-            : args.path === '@tyconsa/bizuit-form-sdk'
-            ? 'module.exports = window.BizuitFormSDK'
-            : args.path === '@tyconsa/bizuit-ui-components'
-            ? 'module.exports = window.BizuitUIComponents'
-            : ''
+          let contents = '';
+
+          if (args.path === 'react') {
+            contents = 'module.exports = window.React';
+          } else if (args.path === 'react-dom') {
+            contents = 'module.exports = window.ReactDOM';
+          } else if (args.path.includes('jsx-runtime')) {
+            // jsx-runtime needs wrapper functions that handle the key argument correctly
+            // jsx/jsxs signature: (type, props, key) where children is inside props
+            // createElement signature: (type, props, ...children)
+            contents = `
+              function createElementWithKey(type, props, key) {
+                if (key !== undefined && props) {
+                  props = Object.assign({}, props, { key: key });
+                }
+                var children = props && props.children;
+                delete props.children;
+                if (Array.isArray(children)) {
+                  return window.React.createElement.apply(null, [type, props].concat(children));
+                } else if (children !== undefined) {
+                  return window.React.createElement(type, props, children);
+                }
+                return window.React.createElement(type, props);
+              }
+              module.exports = {
+                jsx: createElementWithKey,
+                jsxs: createElementWithKey,
+                Fragment: window.React.Fragment
+              };
+            `;
+          } else if (args.path === '@tyconsa/bizuit-form-sdk') {
+            contents = 'module.exports = window.BizuitFormSDK';
+          } else if (args.path === '@tyconsa/bizuit-ui-components') {
+            contents = 'module.exports = window.BizuitUIComponents';
+          }
 
           return {
             contents,
