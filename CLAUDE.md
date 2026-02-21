@@ -469,3 +469,17 @@ Forms should **not bundle** runtime-provided packages - they're injected globall
     └── {form-name}/
         └── form.js         # Compiled bundle
 ```
+
+
+---
+
+## 🔄 Inicio de Sesión: Verificar Skills Actualizados
+
+**REGLA:** Al iniciar una nueva sesión de trabajo, SIEMPRE verificar que el repo de skills esté actualizado:
+
+```bash
+cd ~/.claude/agent-skills && git pull
+```
+
+Esto asegura que los últimos skills estén disponibles antes de comenzar a trabajar.
+
