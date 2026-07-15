@@ -500,22 +500,21 @@ npm install
 ### "Invalid author format" on Upload
 
 ```bash
-# Error: Invalid author format: Tycon S.A.
+# Error: Invalid author format: Equipo <dev>
 
-# Cause: Backend validation doesn't allow spaces in author field
+# Cause: author allows letters, numbers, spaces, dots, underscores,
+# hyphens and @ (max 100 chars). Other characters are rejected.
 
-# Fix: Edit package.json
+# Valid examples:
 {
-  "author": "Tyconsa"  // ✅ No spaces
-}
-
-# Valid alternatives:
-{
-  "author": "Tycon-SA"     // ✅ Hyphen
-  "author": "Tycon_SA"     // ✅ Underscore
-  "author": "john.doe"     // ✅ Dot allowed (no spaces)
+  "author": "TEMIX Team"   // ✅ Spaces allowed
+  "author": "Tycon S.A."   // ✅ Dots allowed
+  "author": "admin@bizuit" // ✅ @ allowed
 }
 ```
+
+> Nota: backends anteriores a este fix rechazaban espacios en `author`.
+> Contra un backend viejo, actualizarlo o usar `"Tycon-SA"` (sin espacios).
 
 ---
 
@@ -527,18 +526,15 @@ The backend validates these fields with strict regex patterns:
 
 | Field | Regex | Allows Spaces? | Example Valid | Example Invalid |
 |-------|-------|----------------|---------------|-----------------|
-| **author** | `^[a-zA-Z0-9._@-]+$` | ❌ No | `Tyconsa`, `john.doe` | `Tycon SA` |
+| **author** | `^[a-zA-Z0-9 ._@-]+$` | ✅ Yes | `TEMIX Team`, `john.doe` | `Tycon & Co` |
 | **name** | (flexible) | ✅ Yes (in scope) | `@tyconsa/my-form` | - |
 | **version** | `^\d+\.\d+\.\d+$` | ❌ No | `1.0.5` | `v1.0.0`, `1.0` |
 | **description** | (no validation) | ✅ Yes | Any text | - |
 
 **Key Rules**:
-- ⚠️ **author**: NO SPACES - use `Tyconsa`, `John-Doe`, or `admin@bizuit`
+- ⚠️ **author**: display name — letters, numbers, spaces, `.` `_` `-` `@` only (max 100 chars)
 - ⚠️ **version**: Semantic versioning (MAJOR.MINOR.PATCH)
 - ✅ **description**: Free text, any format
-
-**Why no spaces in author?**
-Security validation (SQL injection, XSS, command injection prevention)
 
 ---
 

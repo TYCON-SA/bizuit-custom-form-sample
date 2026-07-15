@@ -146,7 +146,7 @@ cd mi-nuevo-form
      "name": "@tyconsa/bizuit-form-mi-nuevo-form",
      "version": "1.0.0",
      "description": "Descripción del form",
-     "author": "TuNombre",  // ⚠️ Sin espacios
+     "author": "Tu Nombre",  // letras, números, espacios, . _ - @
      "scripts": {
        "build": "node ../build-form.js"
      }
@@ -309,7 +309,7 @@ Ver [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) para setup completo de entornos.
   "name": "form-template",
   "version": "1.0.0",
   "description": "Descripción del formulario",
-  "author": "NombreAutor",  // ⚠️ SIN ESPACIOS
+  "author": "Nombre Autor",  // letras, números, espacios, . _ - @
   "scripts": {
     "build": "node ../build-form.js"
   }
@@ -478,13 +478,15 @@ Ver logs en: https://app.glitchtip.com/
 
 ### "Invalid author format" en Upload
 
-**Error**: `Invalid author format: Tycon S.A.`
+**Error**: `Invalid author format: Equipo <dev>`
 
-**Solución**: El autor NO puede contener espacios. Usar:
-- ✅ `"author": "Tyconsa"`
-- ✅ `"author": "John-Doe"`
+**Regla**: el autor admite letras, números, espacios, puntos, guiones, guiones bajos y `@` (máx. 100 caracteres). Otros caracteres lo rechazan:
+- ✅ `"author": "TEMIX Team"` (espacios permitidos)
+- ✅ `"author": "Tycon S.A."`
 - ✅ `"author": "admin@bizuit"`
-- ❌ `"author": "Tycon SA"` (tiene espacio)
+- ❌ `"author": "Tycon & Co"` (el `&` no está permitido)
+
+> Nota: backends anteriores a este fix rechazaban espacios en `author`. Contra un backend viejo, actualizarlo o usar `"Tycon-SA"` (sin espacios).
 
 ---
 
