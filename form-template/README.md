@@ -56,7 +56,7 @@ When running the .NET backend locally on port 8000:
 export const DEV_CREDENTIALS = {
   username: 'your-username',
   password: 'your-password',
-  apiUrl: 'https://test.bizuit.com/yourTenantBizuitDashboardapi/api/',
+  apiUrl: 'https://your-bizuit-host/yourTenantBizuitDashboardapi/api/',
   // Point directly to local .NET backend
   pluginApiUrl: 'http://localhost:8000/api/plugins/yourplugin'
 };
@@ -118,7 +118,7 @@ In production, `runtime-app` passes user roles and role settings from Dashboard 
 export const DEV_CREDENTIALS = {
   username: 'your-username',
   password: 'your-password',
-  apiUrl: 'https://test.bizuit.com/yourTenantBizuitDashboardapi/api/',
+  apiUrl: 'https://your-bizuit-host/yourTenantBizuitDashboardapi/api/',
   pluginApiUrl: 'http://localhost:8000/api/plugins/yourplugin',
 
   // Emulate what runtime-app sends from Dashboard

@@ -7,7 +7,7 @@ Pasos completos para deployar custom forms a entornos Bizuit BPM (clientX, clien
 ### Entornos Disponibles
 
 ```
-test.bizuit.com/
+your-bizuit-host/
 ├── clientXBIZUITCustomForms/
 │   ├── Runtime App (Next.js)   → Puerto 3001, Windows Service + IIS Reverse Proxy
 │   ├── Backend API (.NET 9)    → IIS Virtual App (In-Process)
@@ -23,8 +23,8 @@ test.bizuit.com/
 
 | Entorno | Runtime App | Backend API | Admin Panel |
 |---------|------------|-------------|-------------|
-| **clientX** | `test.bizuit.com/clientXBIZUITCustomForms` | `test.bizuit.com/clientXBIZUITCustomForms/api` | `test.bizuit.com/clientXBIZUITCustomForms/admin` |
-| **clientY** | `test.bizuit.com/clientYBIZUITCustomForms` | `test.bizuit.com/clientYBIZUITCustomForms/api` | `test.bizuit.com/clientYBIZUITCustomForms/admin` |
+| **clientX** | `your-bizuit-host/clientXBIZUITCustomForms` | `your-bizuit-host/clientXBIZUITCustomForms/api` | `your-bizuit-host/clientXBIZUITCustomForms/admin` |
+| **clientY** | `your-bizuit-host/clientYBIZUITCustomForms` | `your-bizuit-host/clientYBIZUITCustomForms/api` | `your-bizuit-host/clientYBIZUITCustomForms/admin` |
 
 ---
 
@@ -95,8 +95,8 @@ tree temp-inspect/
 #### A. Via Admin Panel (Recomendado)
 
 **URL Admin Panel:**
-- clientX: https://test.bizuit.com/clientXBIZUITCustomForms/admin/upload-forms
-- clientY: https://test.bizuit.com/clientYBIZUITCustomForms/admin/upload-forms
+- clientX: https://your-bizuit-host/clientXBIZUITCustomForms/admin/upload-forms
+- clientY: https://your-bizuit-host/clientYBIZUITCustomForms/admin/upload-forms
 
 **Steps:**
 
@@ -113,7 +113,7 @@ tree temp-inspect/
 
 ```bash
 # Endpoint
-POST https://test.bizuit.com/clientXBIZUITCustomForms/api/admin/upload-form
+POST https://your-bizuit-host/clientXBIZUITCustomForms/api/admin/upload-form
 
 # Headers
 Authorization: Bearer {admin-jwt-token}
@@ -127,13 +127,13 @@ file: example-form-deployment-1.0.8-abc1234.zip
 
 ```bash
 # 1. Obtener token admin (requiere login)
-TOKEN=$(curl -X POST https://test.bizuit.com/clientXBIZUITCustomForms/api/admin/login \
+TOKEN=$(curl -X POST https://your-bizuit-host/clientXBIZUITCustomForms/api/admin/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"your_admin_password"}' \
   | jq -r '.token')
 
 # 2. Upload form
-curl -X POST https://test.bizuit.com/clientXBIZUITCustomForms/api/admin/upload-form \
+curl -X POST https://your-bizuit-host/clientXBIZUITCustomForms/api/admin/upload-form \
   -H "Authorization: Bearer $TOKEN" \
   -F "file=@example-form-deployment-1.0.8-abc1234.zip"
 ```
@@ -146,16 +146,16 @@ curl -X POST https://test.bizuit.com/clientXBIZUITCustomForms/api/admin/upload-f
 
 ```bash
 # clientX
-https://test.bizuit.com/clientXBIZUITCustomForms/forms/example-form/form.js
+https://your-bizuit-host/clientXBIZUITCustomForms/forms/example-form/form.js
 
 # clientY
-https://test.bizuit.com/clientYBIZUITCustomForms/forms/example-form/form.js
+https://your-bizuit-host/clientYBIZUITCustomForms/forms/example-form/form.js
 ```
 
 **Test con curl:**
 
 ```bash
-curl -I https://test.bizuit.com/clientXBIZUITCustomForms/forms/example-form/form.js
+curl -I https://your-bizuit-host/clientXBIZUITCustomForms/forms/example-form/form.js
 
 # Debe retornar:
 # HTTP/1.1 200 OK
@@ -164,7 +164,7 @@ curl -I https://test.bizuit.com/clientXBIZUITCustomForms/forms/example-form/form
 
 #### 2. Verificar Metadata en Admin Panel
 
-**URL:** https://test.bizuit.com/clientXBIZUITCustomForms/admin/forms
+**URL:** https://your-bizuit-host/clientXBIZUITCustomForms/admin/forms
 
 **Debe mostrar:**
 
@@ -177,7 +177,7 @@ curl -I https://test.bizuit.com/clientXBIZUITCustomForms/forms/example-form/form
 **Con Token Mock (Solo si NEXT_PUBLIC_ALLOW_DEV_MODE=true):**
 
 ```
-https://test.bizuit.com/clientXBIZUITCustomForms/form/example-form
+https://your-bizuit-host/clientXBIZUITCustomForms/form/example-form
   ?token=test-token
   &userName=TestUser
 ```
@@ -189,7 +189,7 @@ https://test.bizuit.com/clientXBIZUITCustomForms/form/example-form
 El form se accede vía Dashboard de Bizuit BPM. El Dashboard genera URLs con token encriptado:
 
 ```
-https://test.bizuit.com/clientXBIZUITCustomForms/form/example-form
+https://your-bizuit-host/clientXBIZUITCustomForms/form/example-form
   ?token={encrypted-jwt-token}
   &userName={real-user}
   &instanceId={process-instance}
@@ -239,8 +239,8 @@ git checkout dev
 # https://github.com/{your-org}/bizuit-custom-form-sample/actions
 
 # 8. Upload via admin panel a cada entorno deseado
-# clientX: test.bizuit.com/clientXBIZUITCustomForms/admin/upload-forms
-# clientY: test.bizuit.com/clientYBIZUITCustomForms/admin/upload-forms
+# clientX: your-bizuit-host/clientXBIZUITCustomForms/admin/upload-forms
+# clientY: your-bizuit-host/clientYBIZUITCustomForms/admin/upload-forms
 ```
 
 ---
@@ -293,11 +293,11 @@ E:\BIZUITSites\clientX\
 // En: E:\BIZUITSites\clientX\clientXBIZUITCustomFormsBackEnd\appsettings.json
 {
   "ConnectionStrings": {
-    "DashboardDb": "Server=test.bizuit.com;Database=clientXBizuitDashboard;User Id=BIZUITclientX;Password={secure-password};TrustServerCertificate=True;",
-    "PersistenceDb": "Server=test.bizuit.com;Database=clientXBizuitPersistenceStore;User Id=BIZUITclientX;Password={secure-password};TrustServerCertificate=True;"
+    "DashboardDb": "Server=your-bizuit-host;Database=clientXBizuitDashboard;User Id=BIZUITclientX;Password={secure-password};TrustServerCertificate=True;",
+    "PersistenceDb": "Server=your-bizuit-host;Database=clientXBizuitPersistenceStore;User Id=BIZUITclientX;Password={secure-password};TrustServerCertificate=True;"
   },
   "BizuitSettings": {
-    "DashboardApiUrl": "https://test.bizuit.com/clientXBizuitDashboardapi/api",
+    "DashboardApiUrl": "https://your-bizuit-host/clientXBizuitDashboardapi/api",
     "JwtSecretKey": "{generate-with-openssl-rand-hex-32}",
     "EncryptionTokenKey": "{24-char-key-must-match-dashboard}",
     "AdminAllowedRoles": "Administrators,BIZUIT Admins,SuperAdmin,FormManager",
@@ -306,7 +306,7 @@ E:\BIZUITSites\clientX\
     "TempUploadPath": "./temp-uploads"
   },
   "Cors": {
-    "AllowedOrigins": ["https://test.bizuit.com"]
+    "AllowedOrigins": ["https://your-bizuit-host"]
   },
   "Logging": {
     "LogLevel": {
@@ -337,14 +337,14 @@ openssl rand -hex 32
 # En: E:\BIZUITSites\clientX\clientXBIZUITCustomForms\.env.local
 
 # Bizuit API Configuration
-NEXT_PUBLIC_BIZUIT_DASHBOARD_API_URL=https://test.bizuit.com/clientXBizuitDashboardapi/api
+NEXT_PUBLIC_BIZUIT_DASHBOARD_API_URL=https://your-bizuit-host/clientXBizuitDashboardapi/api
 
 # Base path para IIS deployment
 NEXT_PUBLIC_BASE_PATH=/clientXBIZUITCustomForms
 
 # Backend API URL (server-side, usado por Next.js API routes)
 # El backend .NET se accede vía IIS Virtual App, no puerto directo
-NEXT_PUBLIC_API_URL=https://test.bizuit.com/clientXBIZUITCustomFormsBackEnd
+NEXT_PUBLIC_API_URL=https://your-bizuit-host/clientXBIZUITCustomFormsBackEnd
 
 # Timeouts
 NEXT_PUBLIC_BIZUIT_TIMEOUT=30000
@@ -414,7 +414,7 @@ Get-EventLog -LogName Application -Source "*Bizuit*" -Newest 20
 
 #### 5.1. Site Configuration
 
-**Site:** `test.bizuit.com`
+**Site:** `your-bizuit-host`
 
 **Application Pool:** DefaultAppPool (.NET CLR Version: No Managed Code)
 
@@ -422,7 +422,7 @@ Get-EventLog -LogName Application -Source "*Bizuit*" -Newest 20
 
 **Backend API - Virtual Application:**
 
-1. IIS Manager → test.bizuit.com → Add Application
+1. IIS Manager → your-bizuit-host → Add Application
 2. Alias: `clientXBIZUITCustomFormsBackEnd`
 3. Physical Path: `E:\BIZUITSites\clientX\clientXBIZUITCustomFormsBackEnd`
 4. Application Pool: DefaultAppPool (No Managed Code)
@@ -430,7 +430,7 @@ Get-EventLog -LogName Application -Source "*Bizuit*" -Newest 20
 **Runtime App - URL Rewrite:**
 
 ```xml
-<!-- Web.config en E:\DevSites\test.bizuit.com -->
+<!-- Web.config en E:\DevSites\your-bizuit-host -->
 <rule name="clientX-CustomForms-Runtime" stopProcessing="true">
   <match url="^clientXBIZUITCustomForms/(.*)$" />
   <action type="Rewrite" url="http://localhost:3002/{R:1}" />
@@ -451,7 +451,7 @@ Get-EventLog -LogName Application -Source "*Bizuit*" -Newest 20
 
 #### 6.1. Upload via Admin Panel
 
-**URL:** https://test.bizuit.com/clientXBIZUITCustomForms/admin/upload-forms
+**URL:** https://your-bizuit-host/clientXBIZUITCustomForms/admin/upload-forms
 
 **Login:** Usuario con rol `Administrators` o `FormManager`
 
@@ -479,14 +479,14 @@ ls E:\BIZUITSites\clientX\clientXBIZUITCustomForms\public\forms\example-form\for
 **Check 2: HTTP Request**
 
 ```bash
-curl -I https://test.bizuit.com/clientXBIZUITCustomForms/forms/example-form/form.js
+curl -I https://your-bizuit-host/clientXBIZUITCustomForms/forms/example-form/form.js
 
 # Esperar: HTTP/1.1 200 OK
 ```
 
 **Check 3: Admin Panel**
 
-Ir a: https://test.bizuit.com/clientXBIZUITCustomForms/admin/forms
+Ir a: https://your-bizuit-host/clientXBIZUITCustomForms/admin/forms
 
 Debe listar:
 - **Form:** example-form
@@ -497,7 +497,7 @@ Debe listar:
 
 ```bash
 # Con NEXT_PUBLIC_ALLOW_DEV_MODE=true (solo desarrollo)
-https://test.bizuit.com/clientXBIZUITCustomForms/form/example-form?token=test&userName=Test
+https://your-bizuit-host/clientXBIZUITCustomForms/form/example-form?token=test&userName=Test
 
 # Con token real (producción)
 # El Dashboard genera la URL completa con token encriptado
@@ -514,7 +514,7 @@ https://test.bizuit.com/clientXBIZUITCustomForms/form/example-form?token=test&us
 # example-form-deployment-1.0.9-xyz7890.zip
 
 # 2. Upload via admin panel (mismo proceso que deployment inicial)
-https://test.bizuit.com/clientXBIZUITCustomForms/admin/upload-forms
+https://your-bizuit-host/clientXBIZUITCustomForms/admin/upload-forms
 
 # 3. El sistema automáticamente:
 #    - Reemplaza form.js anterior
@@ -522,7 +522,7 @@ https://test.bizuit.com/clientXBIZUITCustomForms/admin/upload-forms
 #    - Mantiene historial (si está configurado)
 
 # 4. Verificar nueva versión
-curl https://test.bizuit.com/clientXBIZUITCustomForms/forms/example-form/form.js | head -n 5
+curl https://your-bizuit-host/clientXBIZUITCustomForms/forms/example-form/form.js | head -n 5
 # Debe mostrar: /* Bizuit Custom Form: example-form */
 #               /* Built: 2025-11-23T15:30:00.000Z */
 ```
@@ -562,16 +562,16 @@ example-form-deployment-1.0.8-abc1234.zip
 # 2. Upload a CADA entorno
 
 # Entorno 1: clientX
-https://test.bizuit.com/clientXBIZUITCustomForms/admin/upload-forms
+https://your-bizuit-host/clientXBIZUITCustomForms/admin/upload-forms
 → Upload ZIP
 
 # Entorno 2: clientY
-https://test.bizuit.com/clientYBIZUITCustomForms/admin/upload-forms
+https://your-bizuit-host/clientYBIZUITCustomForms/admin/upload-forms
 → Upload ZIP
 
 # 3. Verificar en cada entorno
-curl https://test.bizuit.com/clientXBIZUITCustomForms/forms/example-form/form.js
-curl https://test.bizuit.com/clientYBIZUITCustomForms/forms/example-form/form.js
+curl https://your-bizuit-host/clientXBIZUITCustomForms/forms/example-form/form.js
+curl https://your-bizuit-host/clientYBIZUITCustomForms/forms/example-form/form.js
 ```
 
 **Resultado:**
@@ -617,7 +617,7 @@ Esto permite usar **un único build** para múltiples entornos con diferentes ba
 ```typescript
 // src/index.tsx
 const SDK_CONFIG = {
-  apiUrl: 'https://test.bizuit.com/clientXBizuitDashboardapi/api/',
+  apiUrl: 'https://your-bizuit-host/clientXBizuitDashboardapi/api/',
   processName: 'CustomProcess',
   username: 'your_username',
   password: 'your_password'
@@ -756,7 +756,7 @@ C:\inetpub\logs\LogFiles\W3SVC1\
    **Verificar backend CORS:**
    ```bash
    # En .env.local del backend
-   CORS_ORIGINS=https://test.bizuit.com,http://localhost:3001
+   CORS_ORIGINS=https://your-bizuit-host,http://localhost:3001
    ```
 
 ### Token inválido / Authentication failed
@@ -842,7 +842,7 @@ Get-ChildItem .next\standalone\ -Recurse
 
 ```bash
 # 1. Verificar IIS Virtual App existe
-# IIS Manager → test.bizuit.com → Applications → clientXBIZUITCustomFormsBackEnd
+# IIS Manager → your-bizuit-host → Applications → clientXBIZUITCustomFormsBackEnd
 
 # 2. Verificar Application Pool
 # Application Pools → DefaultAppPool → Status: Started
