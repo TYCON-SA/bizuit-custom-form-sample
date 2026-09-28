@@ -400,16 +400,17 @@ Before deploying:
 git add form-template/
 git commit -m "feat: add new form feature"
 
-# 2. Push to main
-git push origin main
+# 2. Open a pull request. `main` is protected: it takes a pull request and a green
+#    "Build and test" run. Pushing straight to main is rejected.
+git push -u origin feat/my-form
+gh pr create --fill
 
 # 3. GitHub Actions will:
-#    - Build form
-#    - Bump version
-#    - Create deployment ZIP
-#    - Upload to Artifacts
-#    - Commit ZIP to repo
-#    - Create git tag
+#    - Type-check, test and build every form
+#    - Resolve the version (MAJOR.MINOR from package.json + run number)
+#    - Create the deployment ZIP
+#    - Upload it to Artifacts
+#    (nothing is committed back: main is protected)
 
 # 4. Download artifact from GitHub Actions
 # 5. Upload via admin panel

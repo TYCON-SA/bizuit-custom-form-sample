@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "build-form.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "node scripts/run-in-forms.js build",
+    "type-check": "node scripts/run-in-forms.js type-check",
+    "test": "node scripts/run-in-forms.js test"
   },
   "keywords": [],
   "author": "",

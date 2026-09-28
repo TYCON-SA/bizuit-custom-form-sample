@@ -25,7 +25,7 @@ jobs:
     name: Build Offline Deployment Package
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Necesario para hacer push al repositorio
+      contents: write  # Para publicar el release. Este workflow NO escribe en main.
     outputs:
       changed_forms_json: ${{ steps.changed_forms.outputs.changed_forms_json }}
       has_changes: ${{ steps.changed_forms.outputs.no_changes != 'true' }}
@@ -39,7 +39,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          # 🔴 Node 18 reached end of life in April 2025. Keep this in step with the version in
+          # build-and-test.yml: packaging on one version what was tested on another proves nothing.
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
@@ -124,70 +126,65 @@ jobs:
             echo "📋 JSON array: $FORMS_JSON"
           fi
 
-      - name: Calculate per-form versions (simple increment)
+      - name: Calculate per-form versions
         id: form_versions
         if: steps.changed_forms.outputs.no_changes != 'true'
         run: |
-          echo "🔢 Incrementing versions for each changed form..."
+          # 🔴 THE VERSION NO LONGER COMES FROM A COMMIT ON MAIN. It used to: this workflow read
+          # the previous version from HEAD~1, incremented the patch, committed every package.json
+          # back to main and pushed. That made the packaging job a WRITER on the default branch —
+          # so protecting `main` (pull request required) broke packaging outright, and the only
+          # ways out were to weaken the protection or to hand a bypass token to the robot.
+          #
+          # Neither is worth it for a sample repository: there are no releases to track here, just
+          # example packages. MAJOR.MINOR still come from each form's package.json — a human
+          # decides those. PATCH is the run number: monotonic, and it needs nobody's write access.
+          #
+          # Said out loud, because it will surprise someone: the version in package.json on main
+          # stays at its MAJOR.MINOR and does NOT track what was packaged. The built ZIP, its
+          # manifest and the release carry the full version.
+          echo "🔢 Versioning each changed form (PATCH = run number ${{ github.run_number }})..."
           echo ""
 
           CHANGED_FORMS="${{ steps.changed_forms.outputs.changed_forms }}"
 
-          # Procesar cada form individualmente
           for form_name in $CHANGED_FORMS; do
             echo "════════════════════════════════════════════════════════════════"
             echo "📦 Processing: $form_name"
             echo "────────────────────────────────────────────────────────────────"
 
-            # 1. Leer package.json ACTUAL (en este commit)
             if [ ! -f "$form_name/package.json" ]; then
               echo "❌ ERROR: package.json not found for $form_name"
               exit 1
             fi
 
             CURRENT_VERSION=$(jq -r '.version // "1.0.0"' "$form_name/package.json")
-            echo "📄 Current version in package.json: $CURRENT_VERSION"
+            echo "📄 Version in package.json: $CURRENT_VERSION"
 
-            # 2. Leer package.json del commit ANTERIOR
-            PREVIOUS_VERSION=$(git show HEAD~1:"$form_name/package.json" 2>/dev/null | jq -r '.version // "0.0.0"' 2>/dev/null || echo "0.0.0")
-            echo "📜 Previous version (last commit): $PREVIOUS_VERSION"
-
-            # 3. Incrementar PATCH automáticamente
-            # Validar que PREVIOUS_VERSION tiene formato correcto (X.Y.Z)
-            if [ -z "$PREVIOUS_VERSION" ] || [ "$PREVIOUS_VERSION" = "0.0.0" ] || ! [[ "$PREVIOUS_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              NEW_VERSION="1.0.0"
-              echo "🎉 First deployment or invalid version! Starting at v1.0.0"
-              echo "   Previous version was: '$PREVIOUS_VERSION'"
+            if [ -z "$CURRENT_VERSION" ] || ! [[ "$CURRENT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              NEW_VERSION="1.0.${{ github.run_number }}"
+              echo "🎉 Missing or invalid version. Starting at $NEW_VERSION"
             else
-              IFS='.' read -r MAJOR MINOR PATCH <<< "$PREVIOUS_VERSION"
-              PATCH=$((PATCH + 1))
-              NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-              echo "🔼 Auto-increment: $PREVIOUS_VERSION → $NEW_VERSION"
+              IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+              NEW_VERSION="$MAJOR.$MINOR.${{ github.run_number }}"
+              echo "🔼 Version for this package: $CURRENT_VERSION → $NEW_VERSION"
             fi
 
-            echo ""
-
-            # 4. Actualizar package.json con nueva versión
-            echo "💾 Updating $form_name/package.json to version $NEW_VERSION..."
+            # Written in the runner only. Nothing is committed: see the note above.
             jq --arg version "$NEW_VERSION" '.version = $version' "$form_name/package.json" > "$form_name/package.tmp.json"
             mv "$form_name/package.tmp.json" "$form_name/package.json"
 
-            echo "✅ package.json updated: $PREVIOUS_VERSION → $NEW_VERSION"
-            echo ""
-
-            # 5. Guardar versión en output
             echo "${form_name}_version=$NEW_VERSION" >> /tmp/form_versions.txt
 
             echo "════════════════════════════════════════════════════════════════"
             echo ""
           done
 
-          echo "✅ All form versions incremented automatically"
+          echo "✅ All form versions resolved"
           echo ""
           echo "📋 Summary of versions:"
           cat /tmp/form_versions.txt
 
-          # Guardar en GITHUB_OUTPUT
           cat /tmp/form_versions.txt >> $GITHUB_OUTPUT
 
       - name: Build changed forms
@@ -614,60 +611,8 @@ jobs:
           path: artifact-staging/*/upload/*.zip
           retention-days: 1  # Temporary, just for passing to next job
 
-      - name: Commit and push deployment ZIPs and updated package.json files
-        if: steps.changed_forms.outputs.no_changes != 'true'
-        run: |
-          echo "📝 Committing deployment ZIPs and updated package.json files..."
-
-          # Configurar git
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Agregar archivos ZIP, directorio upload/, y package.json actualizados
-          git add */upload/*.zip || true
-          git add */upload/ || true
-          git add */package.json || true
-
-          # Verificar si hay cambios
-          if git diff --staged --quiet; then
-            echo "⚠️  No changes to commit"
-          else
-            # Obtener lista de forms con versiones para el commit message
-            FORMS_WITH_VERSIONS=""
-            CHANGED_FORMS="${{ steps.changed_forms.outputs.changed_forms }}"
-            for form_name in $CHANGED_FORMS; do
-              if [ -f "$form_name/package.json" ]; then
-                FORM_VERSION=$(jq -r '.version' "$form_name/package.json")
-                FORMS_WITH_VERSIONS="${FORMS_WITH_VERSIONS}\n  - $form_name: v$FORM_VERSION"
-              fi
-            done
-
-            # Crear commit
-            git commit -m "chore: update versions and add deployment ZIPs [skip ci]" \
-                       -m "Generated by workflow run #${{ github.run_number }}" \
-                       -m "Commit: ${{ steps.build_metadata.outputs.commit_hash }}" \
-                       -m "" \
-                       -m "Updated forms:${FORMS_WITH_VERSIONS}" \
-                       -m "" \
-                       -m "🤖 Automated commit by GitHub Actions"
-
-            # Pull con rebase antes de push para evitar race conditions
-            echo "🔄 Pulling latest changes with rebase..."
-            git pull --rebase origin main || {
-              echo "⚠️  Rebase failed, aborting and retrying with merge strategy..."
-              git rebase --abort 2>/dev/null || true
-              git pull --no-rebase origin main
-            }
-
-            # Push usando el token del workflow
-            echo "📤 Pushing changes to repository..."
-            git push origin HEAD:main
-
-            echo "✅ Changes committed and pushed to repository"
-          fi
-
-      # Tags removed - package.json is now the source of truth for versioning
-      # No need for git tags, versions are managed through package.json auto-increment
+      # 🔴 Nothing is committed back to the repository. The ZIPs live in the run's artifacts and
+      # in the release; the versions are derived from the run number. See the versioning step.
       - name: Create release (if manual trigger)
         if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v1
@@ -755,13 +700,11 @@ jobs:
           echo "3. Transfer the inner ZIP to offline server" >> $GITHUB_STEP_SUMMARY
           echo "4. Upload via: \`/admin/upload-forms\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Alternative:** Use ZIPs from \`{form-name}/upload/\` directory in the repository (already committed)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
           echo "### ℹ️ Versioning System" >> $GITHUB_STEP_SUMMARY
           echo "- Each form has **independent versioning**" >> $GITHUB_STEP_SUMMARY
-          echo "- **package.json** is the source of truth" >> $GITHUB_STEP_SUMMARY
-          echo "- Versions auto-increment (PATCH) on every change" >> $GITHUB_STEP_SUMMARY
-          echo "- Simple and predictable: v1.0.0 → v1.0.1 → v1.0.2..." >> $GITHUB_STEP_SUMMARY
+          echo "- **MAJOR.MINOR** come from each form's \`package.json\` (a human decides them)" >> $GITHUB_STEP_SUMMARY
+          echo "- **PATCH** is the workflow run number, so packaging never writes to \`main\`" >> $GITHUB_STEP_SUMMARY
+          echo "- The version in \`package.json\` on \`main\` does not track what was packaged" >> $GITHUB_STEP_SUMMARY
 
   # Second job: Upload artifacts per form using matrix strategy
   upload-artifacts:
