@@ -1,6 +1,21 @@
 # Changelog
 
-All notable changes to the Bizuit Custom Forms project will be documented in this file.
+All notable changes to this repository, newest first. One entry per release, and each entry says
+WHY, not only what — a year from now the question will be "why does the version in package.json on
+main not match what was packaged?", and the answer has to be here.
+
+This file is a changelog and nothing else. It used to end with a handful of loose sections
+(Project Structure, Commits, Testing, Known Issues, Future Enhancements) that were frozen in
+November 2025 and described forms this repository no longer has. What lives where instead:
+
+| looking for | read |
+|---|---|
+| the layout of the repository | [README.md](README.md) |
+| how to run the tests, build, or test a form locally | [README.md](README.md) § Testing |
+| how a form is developed end to end | [FORM_DEVELOPMENT_GUIDE.md](FORM_DEVELOPMENT_GUIDE.md) |
+| how it gets deployed | [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) |
+| what commit did what | `git log` |
+| what is broken or wanted | the repository's issues |
 
 ## [1.2.0] - 2026-09-28
 
@@ -213,67 +228,3 @@ tail -n 5 dist/form.js  # Should see: export{X as default};
 - GitHub Actions workflow for automated compilation
 - 90-day artifact retention
 - Manifest generation with form metadata
-
-## Project Structure
-
-```
-bizuit-custom-form-sample/
-├── .github/
-│   └── workflows/
-│       └── build-deployment-package.yml
-├── solicitud-vacaciones/         # Vacation request form (v1.1.2)
-│   ├── src/index.tsx
-│   ├── dist/form.js
-│   └── package.json
-├── solicitud-soporte/            # IT support form (v1.0.0) ⭐ NEW
-│   ├── src/index.tsx
-│   ├── dist/form.js
-│   └── package.json
-├── aprobacion-gastos/            # Expense approval form
-│   ├── src/index.tsx
-│   ├── dist/form.js
-│   └── package.json
-├── build-form.js                 # Universal build script
-└── README.md
-```
-
-## Commits
-
-- `fa58f3a` - fix: change esbuild format from iife to esm
-- `53f1fb2` - chore: remove deployment-package from git
-- `bf86236` - fix: use esbuild plugin to properly replace React imports
-- `d6121f2` - feat: add new solicitud-soporte form
-
-## Testing
-
-### Local Testing
-```bash
-# Build form
-cd solicitud-soporte
-npm run build
-
-# Verify no typeof require
-grep -i "typeof require" dist/form.js  # Should return nothing
-
-# Verify export default
-tail -n 1 dist/form.js  # Should show: export{X as default};
-```
-
-### Runtime Testing
-1. Download deployment package from GitHub Actions artifacts
-2. Upload via admin: http://localhost:3001/admin/upload-forms
-3. Test forms:
-   - http://localhost:3001/form/solicitud-vacaciones
-   - http://localhost:3001/form/solicitud-soporte
-
-## Known Issues
-
-None at this time. All critical issues resolved.
-
-## Future Enhancements
-
-- [ ] Add file attachment support for forms
-- [ ] Implement form validation library (e.g., Zod)
-- [ ] Add more form templates
-- [ ] Hot reload optimization
-- [ ] Form versioning in UI
