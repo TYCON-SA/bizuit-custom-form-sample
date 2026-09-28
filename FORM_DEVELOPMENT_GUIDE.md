@@ -507,7 +507,7 @@ npm install
 
 # Valid examples:
 {
-  "author": "TEMIX Team"   // ✅ Spaces allowed
+  "author": "Acme Team"   // ✅ Spaces allowed
   "author": "Tycon S.A."   // ✅ Dots allowed
   "author": "admin@bizuit" // ✅ @ allowed
 }
@@ -526,7 +526,7 @@ The backend validates these fields with strict regex patterns:
 
 | Field | Regex | Allows Spaces? | Example Valid | Example Invalid |
 |-------|-------|----------------|---------------|-----------------|
-| **author** | `^[a-zA-Z0-9 ._@-]+$` | ✅ Yes | `TEMIX Team`, `john.doe` | `Tycon & Co` |
+| **author** | `^[a-zA-Z0-9 ._@-]+$` | ✅ Yes | `Acme Team`, `john.doe` | `Tycon & Co` |
 | **name** | (flexible) | ✅ Yes (in scope) | `@tyconsa/my-form` | - |
 | **version** | `^\d+\.\d+\.\d+$` | ❌ No | `1.0.5` | `v1.0.0`, `1.0` |
 | **description** | (no validation) | ✅ Yes | Any text | - |

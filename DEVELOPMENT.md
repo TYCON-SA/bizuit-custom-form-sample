@@ -494,7 +494,7 @@ npm run build
 ### Arquitectura de Entornos
 
 ```
-test.bizuit.com/
+your-bizuit-host/
 ├── clientXBIZUITCustomForms/      # Cliente: clientX
 │   ├── runtime-app (Next.js)       # Puerto 3001
 │   └── backend-api (.NET Backend)       # Puerto 8000
@@ -527,7 +527,7 @@ tree temp/
 
 #### 2. Upload via Admin Panel
 
-**URL:** https://test.bizuit.com/clientXBIZUITCustomForms/admin/upload-forms
+**URL:** https://your-bizuit-host/clientXBIZUITCustomForms/admin/upload-forms
 
 **Steps:**
 
@@ -547,7 +547,7 @@ tree temp/
 
 ```bash
 # En el servidor
-curl https://test.bizuit.com/clientXBIZUITCustomForms/forms/example-form/form.js
+curl https://your-bizuit-host/clientXBIZUITCustomForms/forms/example-form/form.js
 # Debe retornar el JavaScript compilado
 ```
 
@@ -555,7 +555,7 @@ curl https://test.bizuit.com/clientXBIZUITCustomForms/forms/example-form/form.js
 
 ```bash
 # Verificar en admin panel
-https://test.bizuit.com/clientXBIZUITCustomForms/admin/forms
+https://your-bizuit-host/clientXBIZUITCustomForms/admin/forms
 # Debe listar: example-form v1.0.8
 ```
 
@@ -563,7 +563,7 @@ https://test.bizuit.com/clientXBIZUITCustomForms/admin/forms
 
 ```bash
 # URL de testing (si NEXT_PUBLIC_ALLOW_DEV_MODE=true)
-https://test.bizuit.com/clientXBIZUITCustomForms/form/example-form?token=test-token&userName=TestUser
+https://your-bizuit-host/clientXBIZUITCustomForms/form/example-form?token=test-token&userName=TestUser
 # Debe cargar el form correctamente
 ```
 
@@ -573,7 +573,7 @@ El form se carga automáticamente cuando el proceso Bizuit BPM lo invoca:
 
 **URL generada por Dashboard:**
 ```
-https://test.bizuit.com/clientXBIZUITCustomForms/form/example-form
+https://your-bizuit-host/clientXBIZUITCustomForms/form/example-form
   ?token={encrypted-token}
   &userName={user}
   &instanceId={instance-id}
@@ -594,11 +594,11 @@ const formModule = await import(`/forms/${formName}/form.js`);
 
 ```bash
 # 1. Upload a clientX
-https://test.bizuit.com/clientXBIZUITCustomForms/admin/upload-forms
+https://your-bizuit-host/clientXBIZUITCustomForms/admin/upload-forms
 → example-form-deployment-1.0.8-abc1234.zip
 
 # 2. Upload a clientY
-https://test.bizuit.com/clientYBIZUITCustomForms/admin/upload-forms
+https://your-bizuit-host/clientYBIZUITCustomForms/admin/upload-forms
 → example-form-deployment-1.0.8-abc1234.zip
 ```
 
@@ -606,11 +606,11 @@ https://test.bizuit.com/clientYBIZUITCustomForms/admin/upload-forms
 
 - **clientX:**
   - DB: `clientXBizuitDashboard`
-  - API: `test.bizuit.com/clientXBIZUITDashboardapi/api`
+  - API: `your-bizuit-host/clientXBIZUITDashboardapi/api`
 
 - **clientY:**
   - DB: `clientYBizuitDashboard`
-  - API: `test.bizuit.com/clientYBIZUITDashboardapi/api`
+  - API: `your-bizuit-host/clientYBIZUITDashboardapi/api`
 
 ### Variables de Entorno
 
@@ -620,7 +620,7 @@ https://test.bizuit.com/clientYBIZUITCustomForms/admin/upload-forms
 
 ```bash
 # Bizuit API Configuration
-NEXT_PUBLIC_BIZUIT_DASHBOARD_API_URL=https://test.bizuit.com/clientXBIZUITDashboardapi/api
+NEXT_PUBLIC_BIZUIT_DASHBOARD_API_URL=https://your-bizuit-host/clientXBIZUITDashboardapi/api
 
 # Base path para IIS deployment
 NEXT_PUBLIC_BASE_PATH=/clientXBIZUITCustomForms
@@ -642,19 +642,19 @@ NEXT_PUBLIC_ALLOW_DEV_MODE=false
 
 ```bash
 # SQL Server - Main Database
-DB_SERVER=test.bizuit.com
+DB_SERVER=your-bizuit-host
 DB_DATABASE=clientXBizuitDashboard
 DB_USER=BIZUITclientX
 DB_PASSWORD=your_database_password_here
 
 # SQL Server - Persistence Store (Token Validation)
-PERSISTENCE_DB_SERVER=test.bizuit.com
+PERSISTENCE_DB_SERVER=your-bizuit-host
 PERSISTENCE_DB_DATABASE=clientXBizuitPersistenceStore
 PERSISTENCE_DB_USER=BIZUITclientX
 PERSISTENCE_DB_PASSWORD=your_database_password_here
 
 # Bizuit Dashboard API
-BIZUIT_DASHBOARD_API_URL=https://test.bizuit.com/clientXBIZUITDashboardapi/api
+BIZUIT_DASHBOARD_API_URL=https://your-bizuit-host/clientXBIZUITDashboardapi/api
 
 # Security
 JWT_SECRET_KEY=your_jwt_secret_key_here_generate_with_openssl_rand_hex_32
@@ -669,7 +669,7 @@ MAX_UPLOAD_SIZE_MB=50
 TEMP_UPLOAD_PATH=./temp-uploads
 
 # CORS
-CORS_ORIGINS=https://test.bizuit.com,http://localhost:3001
+CORS_ORIGINS=https://your-bizuit-host,http://localhost:3001
 ```
 
 ---
@@ -782,7 +782,7 @@ nano dev-credentials.js
 2. **API no accesible:**
    ```bash
    # Test manual del endpoint
-   curl https://test.bizuit.com/clientXBIZUITDashboardapi/api/Account/Login \
+   curl https://your-bizuit-host/clientXBIZUITDashboardapi/api/Account/Login \
      -H "Content-Type: application/json" \
      -d '{"username":"your_username","password":"your_password"}'
 
@@ -890,7 +890,7 @@ Ctrl+Shift+R (Windows/Linux)
 Cmd+Shift+R (Mac)
 
 # 2. Verificar versión en servidor
-curl https://test.bizuit.com/clientXBIZUITCustomForms/forms/example-form/form.js | head -n 5
+curl https://your-bizuit-host/clientXBIZUITCustomForms/forms/example-form/form.js | head -n 5
 
 # 3. Verificar metadata en DB
 # Conectarse a SQL Server y verificar tabla FormMetadata

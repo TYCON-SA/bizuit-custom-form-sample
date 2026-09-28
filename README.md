@@ -481,7 +481,7 @@ Ver logs en: https://app.glitchtip.com/
 **Error**: `Invalid author format: Equipo <dev>`
 
 **Regla**: el autor admite letras, números, espacios, puntos, guiones, guiones bajos y `@` (máx. 100 caracteres). Otros caracteres lo rechazan:
-- ✅ `"author": "TEMIX Team"` (espacios permitidos)
+- ✅ `"author": "Acme Team"` (espacios permitidos)
 - ✅ `"author": "Tycon S.A."`
 - ✅ `"author": "admin@bizuit"`
 - ❌ `"author": "Tycon & Co"` (el `&` no está permitido)

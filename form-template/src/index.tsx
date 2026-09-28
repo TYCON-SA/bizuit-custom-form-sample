@@ -2,7 +2,8 @@
  * BIZUIT Custom Form Template
  *
  * Professional template for creating new custom forms with best practices.
- * Based on recubiz-gestion design and UX patterns.
+ * Layout, stats dashboard, modals and table follow the conventions used across
+ * BIZUIT custom forms.
  * Includes stats dashboard, modals, and professional table.
  * Version auto-increments on every change.
  *
@@ -27,7 +28,7 @@ import { BizuitSDK } from '@tyconsa/bizuit-form-sdk';
 
 const SDK_CONFIG = {
   // TODO: Update with your Dashboard API URL (WITHOUT trailing slash)
-  // Example: 'https://test.bizuit.com/yourTenantBizuitDashboardapi/api'
+  // Example: 'https://your-bizuit-host/yourTenantBizuitDashboardapi/api'
   defaultApiUrl: '',
 
   // TODO: Update with your process name
@@ -228,7 +229,7 @@ export default function FormTemplate({ dashboardParams }: FormProps) {
             <p className="text-gray-600">Vista general de datos y acciones disponibles</p>
           </div>
 
-          {/* Stats Cards - EXACT STRUCTURE FROM RECUBIZ */}
+          {/* Stats cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             {/* Total Items */}
             <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border-l-4 border-blue-500 p-6">
