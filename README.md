@@ -46,23 +46,29 @@ bizuit-custom-form-sample/
 │   │   ├── index.tsx                      # Form source code
 │   │   └── utils/
 │   │       └── sentry.ts                  # GlitchTip/Sentry integration
-│   ├── dist/                              # Build output (generated)
+│   │   └── __tests__/
+│   │       └── form-template.test.tsx     # Tests del form (Jest + Testing Library)
+│   ├── dist/                              # Build output (generado, gitignored)
 │   │   ├── form.js                        # Compiled bundle
 │   │   └── dev.html                       # Test page
-│   ├── upload/                            # Deployment ZIPs (generated)
+│   ├── test/
+│   │   └── style-mock.cjs                 # Jest no parsea CSS; el build la inlinea
+│   ├── jest.config.cjs                    # Config de Jest del form
+│   ├── jest.setup.ts                      # DEV_MODE + matchMedia (ver el archivo)
+│   ├── tsconfig.json                      # tsc --noEmit: esbuild NO chequea tipos
 │   └── package.json
 │
-├── example-form/                          # Example form
-│   ├── src/
-│   │   └── index.tsx
-│   ├── dist/
-│   ├── upload/
-│   └── package.json
+├── scripts/
+│   └── run-in-forms.js                    # Corre un script npm en CADA form
 │
 ├── build-form.js                          # Shared esbuild script
-├── package.json                           # Root dependencies (esbuild)
+├── package.json                           # Root dependencies (esbuild) + scripts
 └── README.md                              # This file
 ```
+
+> Un form nuevo se copia entero desde `form-template/`, **archivos de test incluidos**. Un form sin
+> `test`, `type-check` o `build` en su `package.json` hace fallar los comandos de la raíz — a
+> propósito.
 
 ---
 
@@ -167,6 +173,43 @@ cd mi-nuevo-form
 
 ## 🧪 Testing
 
+### Tests automáticos (Jest)
+
+Cada form trae su propia suite de tests. Desde la raíz del repositorio, sobre **todos** los forms:
+
+```bash
+npm install        # esbuild + scripts/ (una sola vez)
+
+npm run type-check # tsc --noEmit en cada form (esbuild NO chequea tipos)
+npm test           # Jest en cada form
+npm run build      # esbuild en cada form
+```
+
+Sobre **un** form solo:
+
+```bash
+cd form-template
+npm install
+npm test                # una corrida
+npm run test:watch      # mientras editás
+npm run test:coverage   # con reporte de cobertura
+```
+
+Los tres comandos de la raíz recorren cada directorio que tenga `package.json`. Un form que **no
+declare** el script (`test`, `type-check` o `build`) cuenta como **fallo**, no como salteado: un
+form sin tests es justamente lo que esto viene a detectar.
+
+El ejemplo de cómo se testea un form está en
+[`form-template/src/__tests__/form-template.test.tsx`](form-template/src/__tests__/form-template.test.tsx).
+Cuando copies el template para tu form, reemplazá también ese archivo — pero conservá la forma:
+renderizar el form como lo renderiza el host (por `dashboardParams`), esperar a que lleguen los
+datos y afirmar sobre lo que el usuario termina viendo.
+
+**Los paquetes `@tyconsa/*` no se mockean** (ver el comentario en `form-template/jest.config.cjs`):
+los tests corren contra los paquetes tal como están publicados. Por eso el workflow
+`build-and-test.yml` corre además **todas las noches** — los paquetes se mueven solos, y "andaba la
+última vez que lo tocamos" no es lo mismo que "anda hoy".
+
 ### Testing Local (Recomendado para UI)
 
 ```bash
@@ -220,14 +263,22 @@ Para testing completo con SDK calls y database (credenciales ya configuradas en 
 
 Cada push a `main` branch:
 1. ✅ Detecta forms cambiados (src/ o package.json)
-2. ✅ Lee versión actual de `package.json`
-3. ✅ Incrementa PATCH automáticamente (e.g., `1.0.0` → `1.0.1`)
-4. ✅ Actualiza `package.json` con nueva versión
-5. ✅ Compila cada form con esbuild
-6. ✅ Crea ZIP: `{form}-deployment-{version}-{hash}.zip`
-7. ✅ Commitea ZIPs a `{form}/upload/`
-8. ✅ Crea git tag: `{form}-v{version}`
-9. ✅ Sube artifacts a GitHub Actions
+2. ✅ Lee MAJOR.MINOR del `package.json` de cada form
+3. ✅ Arma la versión del paquete: `MAJOR.MINOR.{número de corrida}`
+4. ✅ Compila cada form con esbuild
+5. ✅ Crea ZIP: `{form}-deployment-{version}-{hash}.zip`
+6. ✅ Sube el ZIP como artifact de GitHub Actions
+
+**El workflow no escribe nada en `main`.** Antes sí: commiteaba los `package.json` con la versión
+incrementada y los ZIPs en `{form}/upload/`. Eso convertía al robot de empaquetado en un escritor
+de la rama por defecto, así que **proteger `main` rompía el empaquetado**, y las salidas eran
+debilitar la protección o darle al robot un permiso de excepción. Ninguna vale la pena en un
+repositorio de ejemplo: el PATCH sale del número de corrida, que es monótono y no necesita permiso
+de escritura de nadie.
+
+**Consecuencia, dicha en voz alta:** la versión que figura en `package.json` en `main` queda en su
+MAJOR.MINOR y **no refleja lo último empaquetado**. La versión completa viaja en el nombre del ZIP,
+en su `manifest.json` y en el release.
 
 **Nota:** Este sistema funciona idénticamente en GitHub Actions y Azure DevOps.
 
@@ -263,21 +314,17 @@ git commit -m "Mejoras en formulario de aprobación
 - Fix en cálculos"
 ```
 
-### Manual Version Override (Avanzado)
+### Cambiar MAJOR o MINOR
 
-Si necesitas cambiar MAJOR o MINOR versiones (para breaking changes), edita `package.json` manualmente:
+MAJOR y MINOR los decide una persona, editando el `package.json` del form:
 
 ```bash
-# Editar version en package.json
 nano form-template/package.json
-# Cambiar: "version": "1.0.5" → "2.0.0"
-
-git add form-template/package.json
-git commit -m "chore: bump to v2.0.0 for breaking changes"
-git push
-
-# El próximo auto-increment será: 2.0.0 → 2.0.1
+# Cambiar: "version": "1.0.7" → "2.0.0"
 ```
+
+Y va por pull request, como cualquier otro cambio a `main`. El PATCH lo sigue poniendo la corrida:
+el próximo paquete será `2.0.{número de corrida}`.
 
 ### Deployment Automático (GitHub Actions)
 

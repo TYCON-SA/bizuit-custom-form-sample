@@ -221,19 +221,18 @@ git commit -m "feat(example-form): add new feature X"
 git push origin dev
 
 # 5. Merge a main
-git checkout main
-git merge dev
-git push origin main
-git checkout dev
+# `main` está protegida: entra por pull request, con la corrida "Build and test" en verde.
+git push -u origin dev
+gh pr create --base main --head dev --fill
+# ...revisión y merge desde GitHub...
 
 # 6. GitHub Actions automáticamente:
 #    - Detecta el cambio
-#    - Calcula nueva versión (v1.0.9)
+#    - Arma la versión: MAJOR.MINOR del package.json + número de corrida
 #    - Buildea el form
-#    - Crea ZIP: example-form-deployment-1.0.9-{hash}.zip
-#    - Commitea ZIP a example-form/upload/
-#    - Crea git tag: example-form-v1.0.9
+#    - Crea ZIP: example-form-deployment-{version}-{hash}.zip
 #    - Sube artifact a GitHub Actions
+#    (no commitea nada de vuelta: main está protegida)
 
 # 7. Download artifact de GitHub Actions
 # https://github.com/{your-org}/bizuit-custom-form-sample/actions

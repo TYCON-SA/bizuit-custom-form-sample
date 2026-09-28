@@ -304,15 +304,21 @@ module.exports = {
 ```
 form-template/
 ├── src/
-│   └── index.tsx           # Form source (must export default)
+│   ├── index.tsx           # Form source (must export default)
+│   └── __tests__/          # Jest + Testing Library tests for the form
+├── test/
+│   └── style-mock.cjs      # Jest cannot parse CSS; the build inlines it
 ├── dist/                   # Build output (gitignored)
-├── upload/                 # Deployment ZIPs (force tracked)
-├── package.json            # Form version + dependencies
-├── tsconfig.json
+├── jest.config.cjs         # .cjs because this package is "type": "module"
+├── jest.setup.ts           # DEV_MODE + window.matchMedia (read the comments there)
+├── package.json            # Form version + dependencies + scripts
+├── tsconfig.json           # tsc --noEmit; esbuild does NOT check types
 ├── dev.html                # Local testing page
 ├── dev-credentials.js      # Local creds (gitignored)
 └── dev-credentials.example.js  # Template
 ```
+
+Deployment ZIPs are NOT committed: CI publishes them as run artifacts. `*/upload/` is gitignored.
 
 ### Form Entry Point Requirements
 
@@ -454,11 +460,14 @@ Forms should **not bundle** runtime-provided packages - they're injected globall
 
 **Process:**
 1. **Detect changed forms** - Git diff analysis
-2. **Auto-increment versions** - Per-form patch bump in `package.json`
+2. **Resolve versions** - `MAJOR.MINOR` from each form's `package.json`, `PATCH` = run number
 3. **Build forms** - Run `npm run build` for each
 4. **Create deployment ZIPs** - Individual ZIPs per form with manifest.json
-5. **Commit back** - Update `package.json` and add ZIPs to `*/upload/`
-6. **Publish artifacts** - Upload to Azure DevOps artifacts
+5. **Publish artifacts** - Upload to the pipeline artifacts
+
+Nothing is committed back. `main` is protected, so a robot that writes to it would need either a
+weaker protection or a bypass token — see the versioning note in
+`.github/workflows/build-deployment-package.yml`.
 
 ### Deployment Package Structure
 

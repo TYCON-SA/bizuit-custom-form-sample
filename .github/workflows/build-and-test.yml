@@ -1,0 +1,84 @@
+# Builds every form and runs its tests against the CURRENTLY PUBLISHED BIZUIT packages.
+#
+# 🔴 WHY THIS EXISTS. Until 2026-09-29 the only workflow here packaged the forms — it never
+# type-checked them and it never ran a test, because there were no tests to run. So a new version
+# of @tyconsa/bizuit-ui-components or of @tyconsa/bizuit-form-sdk could break the template without
+# a single commit in this repository, and nobody would find out until someone started a new form
+# from it, weeks later.
+#
+# A template that is not built is not a template: it is a snapshot of a day that has passed.
+#
+# The nightly run is the point of the whole file. The packages move on their own, so "it worked
+# when we last touched it" is not the same as "it works today".
+
+name: Build and test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Every day at 06:00 UTC — catches a package that broke the template with no commit here.
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Type-check, test and build every form
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          # 🔴 Node 18 reached end of life in April 2025. Keep this in step with the version in
+          # build-deployment-package.yml: a template that is tested on one version and packaged on
+          # another is testing something the users never run.
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install the shared build dependencies
+        # Root install: esbuild and the scripts under scripts/. Each form installs its own
+        # dependencies on demand (see scripts/run-in-forms.js).
+        run: npm install
+
+      - name: Move the BIZUIT packages to their newest published version
+        # 🔴 ONLY on the scheduled and manual runs, and ON PURPOSE.
+        #
+        # On a pull request we want to know whether THIS change works, against the dependency set
+        # the lockfiles pin. At night we want the opposite question: does the template still work
+        # with the packages as they are published TODAY? `npm install` alone would not answer it —
+        # it honours the lockfile whenever the lockfile still satisfies the ranges, so the nightly
+        # would keep proving that an old, frozen combination works.
+        #
+        # Nothing is committed: the refresh lives and dies inside the runner.
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          for form in */; do
+            [ -f "${form}package.json" ] || continue
+            echo "::group::${form%/}: refreshing the BIZUIT packages"
+            (
+              cd "$form"
+              npm install
+              npm update @tyconsa/bizuit-form-sdk @tyconsa/bizuit-ui-components
+              echo "Resolved versions:"
+              npm ls @tyconsa/bizuit-form-sdk @tyconsa/bizuit-ui-components || true
+            )
+            echo "::endgroup::"
+          done
+
+      - name: Type-check
+        # esbuild STRIPS the types without checking them, so a form with a real type error builds,
+        # ships and fails in the browser. This is the only step that reads the types.
+        run: npm run type-check
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        # Last, so a build failure is never mistaken for a test failure.
+        run: npm run build

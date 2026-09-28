@@ -61,11 +61,16 @@ example-form/
 │   ├── form.js            # Bundle compilado
 │   ├── form.js.map        # Source map
 │   └── form.meta.json     # Metadata
-├── upload/                # ZIPs de deployment (generado por CI/CD)
+├── src/__tests__/         # Tests del form (Jest + Testing Library)
+├── test/style-mock.cjs    # Jest no parsea CSS; el build la inlinea
 ├── dev.html               # Página de testing local
-├── package.json           # Dependencias y versión
-└── tsconfig.json          # Configuración TypeScript
+├── jest.config.cjs        # .cjs porque el paquete es "type": "module"
+├── jest.setup.ts          # DEV_MODE + window.matchMedia (leer los comentarios)
+├── package.json           # Dependencias, versión y scripts
+└── tsconfig.json          # tsc --noEmit; esbuild NO chequea tipos
 ```
+
+Los ZIPs de deployment **no se commitean**: el CI los publica como artifacts de la corrida.
 
 ### Crear un Nuevo Form
 
@@ -467,12 +472,13 @@ npm run build
 **Proceso:**
 
 1. **Detección:** Detecta forms cambiados (src/ o package.json)
-2. **Versioning:** Calcula nueva versión basada en git tags
+2. **Versioning:** `MAJOR.MINOR` del `package.json` del form, `PATCH` = número de corrida
 3. **Build:** Compila cada form con esbuild
 4. **Packaging:** Crea ZIP por form: `{form}-deployment-{version}-{hash}.zip`
-5. **Commit:** Commitea ZIPs a `{form}/upload/`
-6. **Git Tags:** Crea tag `{form}-v{version}`
-7. **Artifacts:** Sube artifacts a GitHub Actions
+5. **Artifacts:** Sube artifacts a GitHub Actions
+
+No commitea nada de vuelta: `main` está protegida, y un robot que escriba ahí obliga a debilitar la
+protección o a darle un permiso de excepción.
 
 **Artifacts generados:**
 
