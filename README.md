@@ -29,7 +29,6 @@ Este repositorio contiene documentación completa para desarrollar, testear y de
 ### 📦 Otros Recursos
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Historial de cambios del repositorio
-- **[AZURE_DEVOPS_SETUP.md](AZURE_DEVOPS_SETUP.md)** - Configuración de pipelines Azure DevOps (deprecado - usar GitHub Actions)
 
 ---
 

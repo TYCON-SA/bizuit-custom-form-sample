@@ -452,22 +452,34 @@ Forms should **not bundle** runtime-provided packages - they're injected globall
 
 ---
 
-## CI/CD Pipeline
+## CI/CD
 
-### Azure DevOps Pipeline
+Two GitHub Actions workflows, and nothing else. There is no Azure DevOps pipeline here: the one
+that used to live in `azure-pipelines.yml` was dropped in 2026-09 — nobody ran it, it duplicated
+the workflow below, and it still committed version bumps and ZIPs back to the branch, which is the
+exact bug this repository had to fix. Anyone copying this template and adopting that file would
+have inherited it.
 
-**File:** `azure-pipelines.yml`
+### `.github/workflows/build-and-test.yml`
+
+Type-checks, tests and builds EVERY form. Runs on every push to `main`, on every pull request,
+**and every night at 06:00 UTC** — the nightly run first moves the `@tyconsa` packages to their
+newest published version, because those packages move on their own and "it worked when we last
+touched it" is not "it works today".
+
+This is the check `main` requires before a pull request can be merged.
+
+### `.github/workflows/build-deployment-package.yml`
 
 **Process:**
 1. **Detect changed forms** - Git diff analysis
 2. **Resolve versions** - `MAJOR.MINOR` from each form's `package.json`, `PATCH` = run number
 3. **Build forms** - Run `npm run build` for each
 4. **Create deployment ZIPs** - Individual ZIPs per form with manifest.json
-5. **Publish artifacts** - Upload to the pipeline artifacts
+5. **Publish artifacts** - Upload to the run's artifacts
 
 Nothing is committed back. `main` is protected, so a robot that writes to it would need either a
-weaker protection or a bypass token — see the versioning note in
-`.github/workflows/build-deployment-package.yml`.
+weaker protection or a bypass token — see the versioning note in the workflow itself.
 
 ### Deployment Package Structure
 
