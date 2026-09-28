@@ -10,8 +10,11 @@ dist/form.dev.js.map
 
 node_modules/
 
-# Dependencies
-package-lock.json
+# 🔴 package-lock.json SÍ se commitea, a propósito, y por eso NO está en esta lista.
+#
+# Estaba ignorado mientras el archivo ya venía versionado: la regla no hacía nada acá, pero el
+# formulario nuevo que se copia desde este template nacía sin lock. Sin lock, cada corrida de CI
+# resuelve las dependencias de nuevo y "anda en mi máquina" deja de querer decir algo.
 
 # IDE
 .idea/
