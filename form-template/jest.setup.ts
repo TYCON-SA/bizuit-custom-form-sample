@@ -2,8 +2,9 @@ import '@testing-library/jest-dom';
 
 // 🔴 DEV_MODE has to be set BEFORE the form is imported.
 //
-// src/utils/sentry.ts reads window.DEV_MODE at import time: when it is not true it assumes
-// production, initialises GlitchTip and REPLACES console.log/console.warn with silent versions.
+// A form that adds the optional GlitchTip integration (README, "Logging con GlitchTip") reads
+// window.DEV_MODE at import time: when it is not true it assumes production, initialises
+// GlitchTip and REPLACES console.log/console.warn with silent versions.
 // Under Jest that means the first `import` of the form silently mutates the console of every
 // later test, and any test asserting on a log sees nothing.
 //

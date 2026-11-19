@@ -43,8 +43,6 @@ bizuit-custom-form-sample/
 ├── form-template/                         # ⭐ Template base para nuevos forms
 │   ├── src/
 │   │   ├── index.tsx                      # Form source code
-│   │   └── utils/
-│   │       └── sentry.ts                  # GlitchTip/Sentry integration
 │   │   └── __tests__/
 │   │       └── form-template.test.tsx     # Tests del form (Jest + Testing Library)
 │   ├── dist/                              # Build output (generado, gitignored)
@@ -454,11 +452,13 @@ El runtime hace polling cada **10 segundos** a `/api/custom-forms/versions`. Si 
 
 ---
 
-## 📊 Logging con GlitchTip
+## 📊 Logging con GlitchTip (opcional)
 
-El template incluye integración con **GlitchTip** (compatible con Sentry) para capturar logs en producción.
+El template **no** trae la integración con GlitchTip (compatible con Sentry). Hasta el 2026-11-19 la traía
+con un DSN de ejemplo y un TODO. Cada producto nuevo arrancaba con un hallazgo crítico del revisor de React
+en su primer formulario, y con un paquete que no usaba. Se agrega cuando el producto tiene su proyecto en GlitchTip.
 
-### Cómo Funciona
+### Qué hace
 
 | Función | Dev (DEV_MODE=true) | Producción |
 |---------|---------------------|------------|
@@ -466,33 +466,39 @@ El template incluye integración con **GlitchTip** (compatible con Sentry) para 
 | `console.warn(...)` | Visible en consola | Silenciado (evento en GlitchTip) |
 | `console.error(...)` | Visible en consola | Visible + evento en GlitchTip |
 
-### Configuración
+### Cómo se agrega
 
-1. **Crear cuenta en GlitchTip:** https://app.glitchtip.com/
-2. **Crear proyecto** y copiar el DSN
-3. **Editar `src/utils/sentry.ts`:**
+1. Crear el proyecto en GlitchTip (https://app.glitchtip.com/) y copiar su DSN **real**.
+2. En el formulario: `npm install @sentry/react`.
+3. Crear `src/utils/sentry.ts`:
    ```typescript
-   dsn: "https://YOUR_KEY@app.glitchtip.com/YOUR_PROJECT_ID",
+   import * as Sentry from "@sentry/react";
+
+   const isDev = typeof window !== 'undefined' && (window as any).DEV_MODE === true;
+
+   // Sólo en producción (en dev evita errores de CORS)
+   if (typeof window !== 'undefined' && !isDev) {
+     Sentry.init({
+       dsn: "<el DSN real del proyecto>",
+       environment: "production",
+       integrations: [Sentry.captureConsoleIntegration({ levels: ['warn', 'error'] })],
+     });
+     // console.log queda como breadcrumb; console.warn lo captura la integración
+     console.log = (...args: any[]) => Sentry.addBreadcrumb({
+       category: 'console',
+       message: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '),
+       level: 'info',
+     });
+     console.warn = () => {};
+   }
+
+   export { Sentry };
    ```
-4. **(Opcional)** Configurar Allowed Domains en GlitchTip → Settings → Security
+4. Importarlo **primero** en `src/index.tsx`: `import './utils/sentry';`
+5. (Opcional) Configurar Allowed Domains en GlitchTip → Settings → Security.
 
-### Uso para Desarrolladores
-
-Escribir código normal con `console.*`:
-
-```typescript
-console.log('Cargando datos...');
-console.warn('Advertencia: campo vacío');
-console.error('Error crítico:', error);
-```
-
-En producción, GlitchTip intercepta automáticamente. No se necesita código especial.
-
-### Dashboard
-
-Ver logs en: https://app.glitchtip.com/
-
-**Nota:** El DSN está expuesto en el bundle JavaScript - esto es normal para frontend. La seguridad se configura en GlitchTip con Allowed Domains.
+El DSN queda expuesto en el bundle: es normal en frontend. La seguridad se configura en GlitchTip con
+Allowed Domains. `jest.setup.ts` ya pone `DEV_MODE = true`, así que las pruebas no inicializan GlitchTip.
 
 ---
 
