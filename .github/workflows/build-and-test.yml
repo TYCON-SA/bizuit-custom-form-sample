@@ -80,5 +80,47 @@ jobs:
         run: npm test
 
       - name: Build
-        # Last, so a build failure is never mistaken for a test failure.
+        # Build comes after the tests, so a build failure is never mistaken for a test failure.
         run: npm run build
+
+      # 🔴 DEPENDENCY SCAN (2026-11-19). A new product created from this template had its first pull
+      # request stopped by high vulnerabilities inherited from here (an old @tyconsa/bizuit-form-sdk
+      # in the root package.json brought vulnerable axios, form-data and zod). This workflow never
+      # scanned dependencies, so nobody saw them.
+      #
+      # It uses the same harness script as a product pipeline, on the root and on every form, as
+      # the product does. One difference, on purpose: in a product pipeline "could not measure"
+      # (exit 2) only warns, because the nightly review looks again. Here nothing looks again, so it
+      # fails. The scan runs after the build and even if an earlier step failed, so one red run
+      # reports every problem.
+      - name: Fetch the harness (public, no credentials)
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          git clone --quiet --depth 1 --single-branch --branch main --no-tags \
+            https://github.com/TYCON-SA/tycon-harness.git "$RUNNER_TEMP/tcg"
+          echo "Harness at $(git -C "$RUNNER_TEMP/tcg" rev-parse --short HEAD)"
+
+      - name: Dependency scan (root and every form, same criterion as the product pipeline)
+        if: ${{ !cancelled() }}
+        run: |
+          set -u
+          AUD="$RUNNER_TEMP/tcg/scripts/ci/audit-dependencies.js"
+          [ -f "$AUD" ] || { echo "::error::audit-dependencies.js did not arrive from the harness — a missing gate is not a passed gate"; exit 1; }
+          FORMS=$(find . -maxdepth 2 -type f -name package.json -not -path '*/node_modules/*' | grep -v '^\./package.json' | xargs -n1 dirname | sort -u)
+          [ -n "$FORMS" ] || { echo "::error::No form found — 'saw nothing' is not 'clean'"; exit 1; }
+          VULNERABLE=""; UNMEASURED=""
+          for dir in . $FORMS; do
+            echo "── $dir"
+            # `|| RC=$?`: GitHub runs steps with `bash -e`, which would stop the loop at the first
+            # finding and leave the remaining forms unscanned.
+            RC=0; node "$AUD" --repo "$dir" --type npm --block || RC=$?
+            case "$RC" in
+              0) ;;
+              1) VULNERABLE="$VULNERABLE $dir" ;;
+              *) UNMEASURED="$UNMEASURED $dir" ;;
+            esac
+          done
+          [ -z "$UNMEASURED" ] || echo "::error::The scan could not measure:$UNMEASURED — not measured is not clean"
+          [ -z "$VULNERABLE" ] || echo "::error::High or critical vulnerable packages in:$VULNERABLE — every new product would inherit them"
+          [ -z "$UNMEASURED$VULNERABLE" ]

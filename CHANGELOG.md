@@ -17,6 +17,31 @@ November 2025 and described forms this repository no longer has. What lives wher
 | what commit did what | `git log` |
 | what is broken or wanted | the repository's issues |
 
+## [1.3.0] - 2026-11-19
+
+A new product created from this template had its first pull request stopped by problems that
+came from here. This workflow could not see them, because it never scanned dependencies.
+
+### Added - Dependency scan
+
+- The workflow scans the root and every form with the harness script a product pipeline runs
+  (`audit-dependencies.js --block`). Here "could not measure" fails, because nothing looks again later.
+
+### Removed
+
+- **`@tyconsa/bizuit-form-sdk` from the root `package.json`.** The root never used it
+  (`build-form.js` marks it as external), and its pinned `^2.4.2` brought vulnerable `axios`,
+  `form-data` and `zod` (high).
+- **The GlitchTip/Sentry integration from `form-template`** (`src/utils/sentry.ts` and
+  `@sentry/react`). It shipped a placeholder DSN and a TODO, and the React reviewer flagged it as
+  critical in the first form of every product. The README explains how to add it once a product
+  has its own GlitchTip project.
+
+### Changed
+
+- `form-template/package-lock.json` refreshed (`npm audit fix`): it carried 1 critical and 4 high.
+  Root and `form-template` now scan clean.
+
 ## [1.2.0] - 2026-09-28
 
 The template could not meet the rule it is supposed to demonstrate: it had no tests at all, nothing

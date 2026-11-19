@@ -15,7 +15,6 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
-    "@sentry/react": "^9.0.0",
     "@tyconsa/bizuit-form-sdk": "^2.4.5",
     "@tyconsa/bizuit-ui-components": "^1.7.2",
     "react": "^18.3.1",

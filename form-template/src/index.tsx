@@ -11,8 +11,7 @@
  * @version 1.0.5
  */
 
-// Sentry/GlitchTip must be imported first to intercept console.* in production
-import './utils/sentry';
+// Logging to GlitchTip is optional and not included: see "Logging con GlitchTip" in the README.
 
 import { useState, useEffect, useMemo } from 'react';
 import { version as FORM_VERSION } from '../package.json';
