@@ -112,8 +112,10 @@ jobs:
           VULNERABLE=""; UNMEASURED=""
           for dir in . $FORMS; do
             echo "── $dir"
-            node "$AUD" --repo "$dir" --type npm --block
-            case "$?" in
+            # `|| RC=$?`: GitHub runs steps with `bash -e`, which would stop the loop at the first
+            # finding and leave the remaining forms unscanned.
+            RC=0; node "$AUD" --repo "$dir" --type npm --block || RC=$?
+            case "$RC" in
               0) ;;
               1) VULNERABLE="$VULNERABLE $dir" ;;
               *) UNMEASURED="$UNMEASURED $dir" ;;
